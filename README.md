@@ -49,7 +49,7 @@ with Environment.explore(driver=lambda: Firefox(executable_path='drivers/geckodr
                 drawn = env.lastFrameCompletelyDrawn
     
                 while not drawn:
-                    cycles += 1
+                    draw_calls += 1
      
                     # Allowing at least 15s for each layer
                     if not env.isSpinnerShowing() and cycles >= 60:
@@ -64,7 +64,7 @@ with Environment.explore(driver=lambda: Firefox(executable_path='drivers/geckodr
             
                 ttime = end - start
             
-                layer_times[layer.title] = (ttime, drawn)
+                layer_times[layer.title] = (ttime, draw_calls, drawn)
                 
         draw_times[name] = layer_times
 ```

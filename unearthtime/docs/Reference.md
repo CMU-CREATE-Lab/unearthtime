@@ -298,10 +298,23 @@ HitList[
         Hit[4220aa8a-cfd1-4664-a2df-a24145a01815]
 ]
 >>> 
->>> env['StoriesMenu'.click()]
+>>> # Close Story Menu
+>>> env['StoriesMenu'].click()
 >>> 
+>>> # Getting Theme Headers, clicking the Stories Menu if it isn't open
 >>> env.repeat_if('ThemeHeaders', actions=lambda: env['StoriesMenu'].click())
+HitList[
+        Hit[644afca9-7350-42d9-9eda-5ceb3777f4df]
+        Hit[10446881-091f-4a65-a445-12464994ec7b]
+        Hit[f453b7fe-478e-4dab-8d75-c9dd92ea05bd]
+        Hit[4949eae0-8c4f-40d3-83af-c498ee3b1ef4]
+        Hit[deadc66b-8434-45c7-8d1f-17fbf5a79fee]
+        Hit[53cb03b9-ea1e-4058-adc7-f3b1c9b04346]
+        Hit[a6393254-a080-4d4c-a337-e660ac666a87]
+        Hit[4220aa8a-cfd1-4664-a2df-a24145a01815]
+]
 >>> 
+>>> # Get the Theme Headers without the overhead
 >>> env.findall("div.themes-div > h3[data-enabled='true']")
 HitList[
         Hit[644afca9-7350-42d9-9eda-5ceb3777f4df]

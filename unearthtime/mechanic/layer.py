@@ -1,16 +1,23 @@
 from __future__ import annotations
 from _algae.deco import returnonexception
+from _algae.exceptions import UnearthtimeException
 from _algae.typing import ElementPredicate
+from _algae.utils import raiseif
 from .operator import SelectableOperator
 
+from collections import namedtuple
 from environment import Environment
 from explore.query import Miss
+from explore.response import Hit
 from selenium.common.exceptions import ElementNotInteractableException
 from selenium.common.exceptions import StaleElementReferenceException
 from selenium.webdriver.remote.webdriver import WebDriver as Driver
 from selenium.webdriver.remote.webelement import WebElement as Element
 from time import sleep
+from timeit import default_timer as timer
 from typing import Callable, Iterable, Union
+
+DrawnLayer = namedtuple('DrawnLayer', ['title', 'draw_time', 'draw_calls', 'was_drawn'])
 
 class Layer(SelectableOperator):
 
@@ -25,12 +32,36 @@ class Layer(SelectableOperator):
 
 	def __repr__(self): return '%s[%s]' % (Layer.__name__, self.__title)
 
+	@staticmethod
+	def from_element(layer: Union[Hit, Element], env):
+		raiseif(
+			layer is None or layer.tagName != 'LABEL', 
+			UnearthtimeException('Element is not a layer.'))
+
+		raiseif(
+			layer._element._parent != env.driver, 
+			UnearthtimeException('Layer not found using environment driver.'))
+
+		try:
+			name = layer.name
+			layer = Layer(name, layer.parent().parent().parent()['aria-labelledby'], env)
+			
+			if layer.inform():
+				return layer
+			else:
+				raise UnearthtimeException('Element is not a layer.')
+		except AttributeError:
+			raise UnearthtimeException('Element is not a layer.')
+
 	@property
 	def category(self) -> str: return self.__category
 
 	@property
 	def category_id(self) -> str: return self.__category_id
 
+	@property
+	def checkbox(self) -> Hit: return self.__checkbox
+	
 	@property
 	def description(self) -> str: return self.__description
 
@@ -101,6 +132,33 @@ class Layer(SelectableOperator):
 				header.click()
 
 			self.__checkbox.click()
+
+	def draw_time(self):
+		if self.inform():
+			if self.title:
+				start = timer()
+				self.select()
+
+				drawn = self._env.lastFrameCompletelyDrawn
+				draw_calls = 1
+
+				while not drawn:
+					sleep(0.25)
+					drawn = self._env.lastFrameCompletelyDrawn
+					draw_calls += 1
+
+					if not self._env.isSpinnerShowing() and draw_calls >= 100:
+						break
+																				
+				end = timer()
+
+				self.select()
+
+				ttime = end - start
+
+				return DrawnLayer(self.__title, ttime, draw_calls, drawn)
+			else:
+				return DrawnLayer('', -1, 0, False)
 
 class Category(SelectableOperator):
 	
@@ -229,8 +287,6 @@ class Category(SelectableOperator):
 				# print('\n'.join(map(str, layers)))
 
 				self.__layers = [ layer for layer in layers if layer.inform() ]
-
-				# print('\n'.join(map(str, self.__layers)))
 				
 				self.__layer_ids = { self.__layers[i].name : i for i in range(len(self.__layers)) }
 
@@ -241,8 +297,6 @@ class Category(SelectableOperator):
 				
 				if close_layers:
 					library.click()
-			
-			self._has_been_informed = True
 
 			return self._has_been_informed
 		else:
@@ -260,6 +314,56 @@ class Category(SelectableOperator):
 			if header['aria-selected'] == 'false':
 				header.click()
 
+	def time_layers(self):
+		if bool(self._env):
+			layer_times = []
+
+			library = self._env['DataLibraryMenu']
+			header = self._env['CategoryHeader', self.__category_id]
+			close_layers = header is Miss
+			close_cat = False
+
+			if not header:
+				library.click()
+
+				if (clear := self._env['DataLibrarySearchClearButton']):
+					clear.click()
+
+				header = self._env['CategoryHeader', self.__category_id]
+
+			elif (clear := self._env['DataLibrarySearchClearButton']):
+				clear.click()
+
+			self.__category_id = header.id_
+			self.__name = header.text
+
+			if header['aria-selected'] == 'false':
+				close_cat = True
+				header.click()
+
+			if (labels := self._env['CategoryLabels', self.__category_id]):
+				layers = [ Layer(label['name'], self.__category_id, self._env) for label in labels]
+				# print('\n'.join(map(str, layers)))
+
+				for layer in layers:
+					if (dlayer := layer.draw_time()):
+						self.__layers.append(layer)
+						layer_times.append(dlayer)
+				
+				self.__layer_ids = { self.__layers[i].name : i for i in range(len(self.__layers)) }
+
+				self._has_been_informed = len(layers) == len(self.__layers)
+
+				if close_cat:
+					header.click()
+				
+				if close_layers:
+					library.click()
+
+			return layer_times
+		else:
+			return []
+		
 class DLSearchResult:
 
 	def __init__(self, label: Element, category: str, env: Environment):

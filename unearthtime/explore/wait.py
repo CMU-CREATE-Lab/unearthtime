@@ -20,7 +20,12 @@ class Wait:
 		else:
 			element = self.__locator
 
-			if istrue(self.__condition(element)):
-				return element
-			else:
-				return False
+		if istrue(self.__condition(element)):
+			return element
+		else:
+			return False
+
+class CheckedLayer(Wait):
+
+	def __new__(cls, layer: Element):
+		return Wait.__new__(cls, layer, lambda x: x.checked)

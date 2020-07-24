@@ -108,25 +108,34 @@ class Locators(metaclass=_LocationRef):
         list_=True)
 
     CategoryTables = Locator([
-        "div.map-layer-div:not([style*='display: none']):not([style*='display:none']) > table:not([style*='display: none']):not([style*='display:none']):not(:first-child)",
-        "div#featured-layers > table:not([style*='display: none']):not([style*='display:none']):not(:first-child)"],
+        "div.map-layer-div:not([style*='display: none']):not([style*='display:none']) > table:not(:first-child)",
+        "div#featured-layers > table:not(:first-child)"],
         list_=True)
 
     CategoryTablesAfter = Locator([
-        lambda id : "div.map-layer-div:not([style*='display: none']):not([style*='display:none']) > table#%s ~ table:not([style*='display: none']):not([style*='display:none'])" % prefix(id, 'category-'),
-        lambda alb : "div.map-layer-div:not([style*='display: none']):not([style*='display:none']) > table[aria-labelledby='%s'] ~ table:not([style*='display: none']):not([style*='display:none'])" % alb,
-        lambda id : "div#featured-layers > table#%s ~ table:not([style*='display: none']):not([style*='display:none'])" % suffix(prefix(id, 'category-'), '-featured'),
-        lambda alb : "div#featured-layers > table[aria-labelledby='%s'] ~ table:not([style*='display: none']):not([style*='display:none'])" % alb],
+        lambda id : "div.map-layer-div:not([style*='display: none']):not([style*='display:none']) > table#%s ~ table" % prefix(id, 'category-'),
+        lambda alb : "div.map-layer-div:not([style*='display: none']):not([style*='display:none']) > table[aria-labelledby='%s'] ~ table" % alb,
+        lambda id : "div#featured-layers > table#%s ~ table" % suffix(prefix(id, 'category-'), '-featured'),
+        lambda alb : "div#featured-layers > table[aria-labelledby='%s'] ~ table" % alb],
         list_=True)
 
     CategoryTablesExcept = Locator([
-        lambda id: "div.map-layer-div:not([style*='display: none']):not([style*='display:none']) > table:not([style*='display: none']):not([style*='display:none']):not([id='category-base-layers']):not([id='%s'])" % prefix(id, 'category-'),
+        lambda id: "div.map-layer-div:not([style*='display: none']):not([style*='display:none']) > table:not([id='category-base-layers']):not([id='%s'])" % prefix(id, 'category-'),
         lambda alb: "div.map-layer-div:not([style*='display: none']):not([style*='display:none']) > h3:not([style*='display: none']):not([style*='display:none']):not([id='category-base-layers']):not([aria-labelledby='%s'])" % alb,
-        lambda id: "div#featured-layers > table:not([style*='display: none']):not([style*='display:none']):not([id='category-base-layers']):not([id='%s'])" % suffix(prefix(id, 'category-'), '-featured'),
+        lambda id: "div#featured-layers > table:not([id='category-base-layers']):not([id='%s'])" % suffix(prefix(id, 'category-'), '-featured'),
         lambda alb: "div#featured-layers > h3:not([style*='display: none']):not([style*='display:none']):not([id='category-base-layers']):not([aria-labelledby='%s'])" % alb],
         list_=True)
 
-    # FeaturedCategoryTables = Locator("div#featured-layers > table:not([style*='display: none']):not([style*='display:none'])", list_=True)
+    LayerLabels = Locator([
+        "div.map-layer-div:not([style*='display: none']):not([style*='display:none']) > table:not(:first-child) tr > td > label",
+        "div#featured-layers > table:not([id='category-base-layers']) tr > td > label"
+    ])
+
+    LayerCheckboxes = Locator([
+        "div.map-layer-div:not([style*='display: none']):not([style*='display:none']) > table:not([id='category-base-layers']) tr > td > label > input",
+        "div#featured-layers > table:not([id='category-base-layers']) tr > td > label > input"
+    ],
+    list_=True)
 
     CategoryHeader = Locator([
         lambda id: "h3#%s" % id,

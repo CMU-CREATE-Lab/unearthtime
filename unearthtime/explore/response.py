@@ -4,7 +4,7 @@ from _algae.typing import ElementPredicate, MissType
 from _algae.utils import istrue
 
 from cv2 import cvtColor, COLOR_BGR2RGB, COLOR_BGR2GRAY
-from functools import reduce
+from functools import cached_property, reduce
 from io import BytesIO
 from numpy import array
 from PIL import Image
@@ -52,10 +52,10 @@ class Hit:
         if attr == 'id_' or attr == 'class_':
             attr = attr.rstrip('_')
 
-        if (attr := self.__getitem__(attr)) is not None:
-            return attr
-        elif (attr := self._parent.execute_script('return arguments[0].%s;' % attr, self)) is not None:
-            return attr
+        if (eattr := self.__getitem__(attr)) is not None:
+            return eattr
+        elif (jattr := self._parent.execute_script('return arguments[0].%s;' % attr, self._element)) is not None:
+            return jattr
         else:
             raise AttributeError(
                 ':[%r]: Input is not an attribute of this element.' % attr)
@@ -136,6 +136,8 @@ class Hit:
         """
         return self if istrue(condition) or (
             callable(condition) and istrue(condition(self))) else Miss
+
+    def parent(self): return Hit(self._element.find_element_by_xpath('./..'))
 
     def reset_display(self):
         """Sets the display property back to what it was if one was present"""

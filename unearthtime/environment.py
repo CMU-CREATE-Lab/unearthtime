@@ -457,23 +457,5 @@ class CachedEnvironment(Environment):
     def __getitem__(self, key):
         return self.pull(key)
 
-# class EnvironmentPool:
-
-#     __instance = None
-#     __pool = None
-
-#     def __new__(cls):
-#         if EnvironmentPool.__instance is None:
-#             EnvironmentPool.__instance = super().__new__(cls)
-#             EnvironmentPool.__pool = Queue(8)
-
-#         return EnvironmentPool.__instance
-        
-#     def take(self, url: str = _Explore):
-#         if not EnvironmentPool.__pool.empty():
-#             env = EnvironmentPool.__pool.get_nowait()
-#             env.
-#             env.goto(url)
-
 
         

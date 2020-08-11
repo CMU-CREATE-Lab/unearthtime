@@ -4,3 +4,5 @@ build/
 dist/
 unearthtime.egg-info/
 venv/
+__pycache__/
+*.log

@@ -2,74 +2,58 @@
 
 `UnearthTime` is a flexible automation framework for testing **EarthTime** using [`Selenium`](https://selenium-python.readthedocs.io/).
 
-Requires:
-  * Selenium
-  * OpenCV
-  * scikit-image
-  * NumPy
+## Installation
+
+Download `.whl` under Releases
+
+```
+pip install unearthtime-0.1.0a0-py3-none-any.whl
+```
  
-## Example: Testing Draw Times of Layers in Data Library
+## Examples
 
-Note: 
-
-This example tests over 3000 layers and crashes Chrome. A way around this is to
- * Test categories in groups using several Chrome windows
-    * The method `Category.layers_by_category_after('category_id', environment)` in `mechanic.layer.Category` will help with this. Note, this method gathers layers from categories **after** the input one.
-    
- * Test using Firefox
-
+Using `geckodriver.exe` for `Firefox` on `Windows`.
 
 ```py
-from environment import Environment
-from mechanic.layer import Category
-from timeit import default_timer as timer
 from selenium.webdriver import Firefox
+from unearthtime.earthtime import EarthTime
 
-import time
+## Printing full library of predefined locators
 
-draw_times = {}
+from unearthtime.explore.library import Library
 
-# Default URL for Environment is 'https://earthtime.org/explore'
-# To change this, either input the URL as the first argument,
-#  or specify it by keyword
+for locator in Library
+    print(locator)
 
-with Environment.explore(driver=lambda: Firefox(executable_path='drivers/geckodriver.exe')) as env:
- 
-    for name, category in Category.layers_by_category_of(env).items():
-        layer_times = {}
-        category.inform()
-      
-        for layer in category:
-   
-            # Skip blank layers
-            if layer.title:
-                draw_calls = 0
-                start = timer()
-                layer.select()
-                drawn = env.lastFrameCompletelyDrawn
+## Searching Data Library
+
+from unearthtime.tools.search import DLSearchEngine
+
+with EarthTime.explore(driver=lambda: Firefox(executable_path='./geckodriver.exe')) as earthtime:
+    dls = DLSearchEngine.informed(earthtime)
+    us_race = dls.search('US Race')
+    us_race_2014 = dls.search(' 2014', clear=False)
+
+## Getting only the selected layers
+
+from unearthtime.tools.layer import Layer
+
+with EarthTime.explore(driver=lambda: Firefox(executable_path='./geckodriver.exe')) as earthtime:
+    selected_checkboxes = list(map(lambda element: element.checked, earthtime.pull('DataLibraryCheckboxes', forced=True)))
+    layers = [Layer.from_element(checkbox.parent_element(), earthtime) for checkbox in selected_checkboxes)]  
     
-                while not drawn:
-                    draw_calls += 1
-     
-                    # Allowing at least 15s for each layer
-                    if not env.isSpinnerShowing() and cycles >= 60:
-                        break
-                    else:
-                        time.sleep(0.25)
-                        drawn = env.lastFrameCompletelyDrawn
-                    
-                end = timer()
-            
-                layer.select()
-            
-                ttime = end - start
-            
-                layer_times[layer.title] = (ttime, draw_calls, drawn)
-                
-        draw_times[name] = layer_times
-```
+## Testing Draw Times of Layers in Data Library of 'https://earthtime.org/explore'
 
-Other examples can be found in the [Reference](https://github.com/CMU-CREATE-Lab/unearthtime/blob/master/unearthtime/docs/Reference.md) doc, which is still under development.
+from unearthtime.tools.layer import Category
+
+layer_times = {}
+
+with EarthTime.explore(driver=lambda: Firefox(executable_path='./geckodriver.exe')) as earthtime:
+    for name, category in Category.layers_by_category(earthtime):
+        times = category.time_layers()
+        layer_times[name] = {layer.title : layer.draw_time for layer in times if layer.draw_time > 0}
+
+```
         
      
      

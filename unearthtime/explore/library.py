@@ -19,11 +19,11 @@ class LocatorReference(type):
             return getattr(cls, key)
 
     def __iter__(cls):
-        for locator in [l for l in dir(cls) if not l.startswith('_')]:
+        for locator in [loc for loc in dir(cls) if not loc.startswith('_')]:
             yield locator
 
     def count(cls):
-        return len([l for l in dir(cls) if not l.startswith('_')])
+        return len([locator for locator in dir(cls) if not locator.startswith('_')])
 
 
 class Library(metaclass=LocatorReference):
@@ -47,22 +47,22 @@ class Library(metaclass=LocatorReference):
     ThemeHeaders = Locator("div.themes-div > h3[data-enabled='true']", list_=True)
     ThemeTables = Locator("div.themes-div > table[data-enabled='true']", list_=True)
     ThemeHeader = Locator([
-        lambda id: "h3#%s" % id,
+        lambda id_: "h3#%s" % id_,
         lambda ac: "div.themes-div > h3[aria-controls='%s']" % prefix(ac, 'theme_')
     ])
     ThemeTable = Locator([
-        lambda id: "table#%s" % prefix(id, 'theme_'),
+        lambda id_: "table#%s" % prefix(id_, 'theme_'),
         lambda alb: "div.themes-div > table[aria-labelledby='%s']" % alb
     ])
     ThemeStories = Locator([
-        lambda id: "table#%s  tr:not(:first-child)" % prefix(id, 'theme_'),
+        lambda id_: "table#%s  tr:not(:first-child)" % prefix(id_, 'theme_'),
         lambda aria_labelledby: "div.themes-div > table[aria-labelledby='%s']  tr:not(:first-child)" % aria_labelledby], list_=True)
-    ThemeDescription = Locator(lambda id: "table#%s #theme_description > td > p" % prefix(id, 'theme_'))
+    ThemeDescription = Locator(lambda id_: "table#%s #theme_description > td > p" % prefix(id_, 'theme_'))
 
-    StoryInfo = Locator(lambda id: "#%s > td" % prefix(id, 'story_'), list_=True)
-    StoryThumbnail = Locator(lambda id: "#%s img" % prefix(id, 'story_'))
-    StoryRadioButton = Locator(lambda id: "#%s input" % prefix(id, 'story_'))
-    StoryTitle = Locator(lambda id: "#%s > td:nth-child(3)" % prefix(id, 'story_'))
+    StoryInfo = Locator(lambda id_: "#%s > td" % prefix(id_, 'story_'), list_=True)
+    StoryThumbnail = Locator(lambda id_: "#%s img" % prefix(id_, 'story_'))
+    StoryRadioButton = Locator(lambda id_: "#%s input" % prefix(id_, 'story_'))
+    StoryTitle = Locator(lambda id_: "#%s > td:nth-child(3)" % prefix(id_, 'story_'))
 
     DataLibraryMenuContainer = Locator('layers-menu', By.ID)
     DataLibraryMenuHeader = Locator("#layers-menu > label[for='layer-selection']")
@@ -107,16 +107,16 @@ class Library(metaclass=LocatorReference):
         list_=True)
 
     CategoryHeadersAfter = Locator([
-        lambda id: "div.map-layer-div:%s > h3#%s ~ h3:%s" % (DISPLAYED, id, DISPLAYED),
+        lambda id_: "div.map-layer-div:%s > h3#%s ~ h3:%s" % (DISPLAYED, id_, DISPLAYED),
         lambda ac: "div.map-layer-div:%s > h3[aria-controls='%s'] ~ h3:%s" % (DISPLAYED, (ac, 'category-'), DISPLAYED),
-        lambda id: "div#featured-layers > h3#%s ~ h3:%s" % (id, DISPLAYED),
+        lambda id_: "div#featured-layers > h3#%s ~ h3:%s" % (id_, DISPLAYED),
         lambda ac: "div#featured-layers > h3[aria-controls='%s'] ~ h3:%s" % (suffix(prefix(ac, 'category-'), '-featured'), DISPLAYED)],
         list_=True)
 
     CategoryHeadersExcept = Locator([
-        lambda id: "div.map-layer-div:%s > h3:%s:not([aria-controls='category-base-layers']):not([id='%s'])" % (DISPLAYED, DISPLAYED, id),
+        lambda id_: "div.map-layer-div:%s > h3:%s:not([aria-controls='category-base-layers']):not([id='%s'])" % (DISPLAYED, DISPLAYED, id_),
         lambda ac: "div.map-layer-div:%s > h3:%s:not([aria-controls='category-base-layers']):not([aria-controls='%s'])" % (DISPLAYED, DISPLAYED, prefix(ac, 'category-')),
-        lambda id: "div#featured-layers > h3:%s:not([aria-controls='category-base-layers']):not([id='%s'])" % (DISPLAYED, id),
+        lambda id_: "div#featured-layers > h3:%s:not([aria-controls='category-base-layers']):not([id='%s'])" % (DISPLAYED, id_),
         lambda ac: "div#featured-layers > h3:%s:not([aria-controls='category-base-layers']):not([aria-controls='%s'])" % (DISPLAYED, suffix(prefix(ac, 'category-'), '-featured'))],
         list_=True)
 
@@ -126,16 +126,16 @@ class Library(metaclass=LocatorReference):
         list_=True)
 
     CategoryTablesAfter = Locator([
-        lambda id: "div.map-layer-div:%s > table#%s ~ table" % (DISPLAYED, prefix(id, 'category-')),
+        lambda id_: "div.map-layer-div:%s > table#%s ~ table" % (DISPLAYED, prefix(id_, 'category-')),
         lambda alb: "div.map-layer-div:%s > table[aria-labelledby='%s'] ~ table" % (DISPLAYED, alb),
-        lambda id: "div#featured-layers > table#%s ~ table" % suffix(prefix(id, 'category-'), '-featured'),
+        lambda id_: "div#featured-layers > table#%s ~ table" % suffix(prefix(id_, 'category-'), '-featured'),
         lambda alb: "div#featured-layers > table[aria-labelledby='%s'] ~ table" % alb],
         list_=True)
 
     CategoryTablesExcept = Locator([
-        lambda id: "div.map-layer-div:%s > table:not([id='category-base-layers']):not([id='%s'])" % (DISPLAYED, prefix(id, 'category-')),
+        lambda id_: "div.map-layer-div:%s > table:not([id='category-base-layers']):not([id='%s'])" % (DISPLAYED, prefix(id_, 'category-')),
         lambda alb: "div.map-layer-div:%s > table:%s:not([id='category-base-layers']):not([aria-labelledby='%s'])" % (DISPLAYED, DISPLAYED, alb),
-        lambda id: "div#featured-layers > table:not([id='category-base-layers']):not([id='%s'])" % suffix(prefix(id, 'category-'), '-featured'),
+        lambda id_: "div#featured-layers > table:not([id='category-base-layers']):not([id='%s'])" % suffix(prefix(id_, 'category-'), '-featured'),
         lambda alb: "div#featured-layers > table:%s:not([id='category-base-layers']):not([aria-labelledby='%s'])" % (DISPLAYED, alb)],
         list_=True)
 
@@ -151,26 +151,26 @@ class Library(metaclass=LocatorReference):
         list_=True)
 
     CategoryHeader = Locator([
-        lambda id: "h3#%s" % id,
+        lambda id_: "h3#%s" % id_,
         lambda ac: "h3[aria-controls='%s']" % prefix(ac, 'category-'),
         lambda ac: "h3[aria-controls='%s']" % suffix(prefix(ac, 'category-'), '-featured')
     ])
 
     CategoryTable = Locator([
-        lambda id: "table#%s" % prefix(id, 'category-'),
-        lambda id: "table#%s" % suffix(prefix(id, 'category-'), '-featured'),
+        lambda id_: "table#%s" % prefix(id_, 'category-'),
+        lambda id_: "table#%s" % suffix(prefix(id_, 'category-'), '-featured'),
         lambda alb: "table[aria-labelledby='%s']" % alb
     ])
 
     CategoryLayers = Locator([
-        lambda id: "table#%s  tr" % prefix(id, 'category-'),
-        lambda id: "table#%s  tr" % suffix(prefix(id, 'category-'), '-featured'),
+        lambda id_: "table#%s  tr" % prefix(id_, 'category-'),
+        lambda id_: "table#%s  tr" % suffix(prefix(id_, 'category-'), '-featured'),
         lambda alb: "table[aria-labelledby='%s'] tr" % alb],
         list_=True)
 
     CategoryLabels = Locator([
-        lambda id: "table#%s  tr > td > label" % prefix(id, 'category-'),
-        lambda id: "table#%s  tr > td > label" % suffix(prefix(id, 'category-'), '-featured'),
+        lambda id_: "table#%s  tr > td > label" % prefix(id_, 'category-'),
+        lambda id_: "table#%s  tr > td > label" % suffix(prefix(id_, 'category-'), '-featured'),
         lambda alb: "table[aria-labelledby='%s'] tr > td > label" % alb,
     ],
         list_=True)
@@ -288,17 +288,17 @@ class Library(metaclass=LocatorReference):
     WaypointsContainer = Locator('div.snaplapse_keyframe_list')
     Waypoints = Locator("div.snaplapse_keyframe_list > div[id*='timeMachine_snaplapse_keyframe_'] > div:first-child", list_=True)
     Waypoint = Locator([
-        lambda id: 'div.snaplapse_keyframe_list_item > #%s' % id,
-        lambda id: '#%s > div' % prefix(id, 'timeMachine_snaplapse_keyframe_')
+        lambda id_: 'div.snaplapse_keyframe_list_item > #%s' % id_,
+        lambda id_: '#%s > div' % prefix(id_, 'timeMachine_snaplapse_keyframe_')
     ])
     WaypointThumbnail = Locator([
-        lambda id: suffix(prefix(id, 'timeMachine_snaplapse_keyframe_'), '_thumbnail'),
-        lambda id: 'div.snaplapse_keyframe_list_item > #%s > img' % id],
+        lambda id_: suffix(prefix(id_, 'timeMachine_snaplapse_keyframe_'), '_thumbnail'),
+        lambda id_: 'div.snaplapse_keyframe_list_item > #%s > img' % id_],
         [By.ID, By.CSS])
 
     WaypointTitle = Locator([
-        lambda id: suffix(prefix(id, 'timeMachine_snaplapse_keyframe_'), '_title'),
-        lambda id: '#%s > div.snaplapse_keyframe_list_item_title' % id],
+        lambda id_: suffix(prefix(id_, 'timeMachine_snaplapse_keyframe_'), '_title'),
+        lambda id_: '#%s > div.snaplapse_keyframe_list_item_title' % id_],
         [By.ID, By.CSS])
 
     MapLogosContainer = Locator('logosContainer', By.ID)

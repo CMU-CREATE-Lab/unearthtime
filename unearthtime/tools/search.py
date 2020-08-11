@@ -39,7 +39,7 @@ class DLSearchResult:
 
     @property
     def title(self):
-        return self.__tile
+        return self.__title
 
     def select(self):
         if bool(self.__earthtime) and self.__checkbox.is_displayed():
@@ -87,29 +87,29 @@ class DLSearchEngine(Tool):
             return bool(self._earthtime)
         elif self.informable():
             library = self._earthtime.DataLibraryMenu
-            input = self._earthtime.DataLibrarySearchInput
-            menu = input is Miss
+            search_input = self._earthtime.DataLibrarySearchInput
+            menu = search_input is Miss
 
-            if not input:
+            if not search_input:
                 library.click()
-                input = self._earthtime.DataLibrarySearchInput
+                search_input = self._earthtime.DataLibrarySearchInput
 
             if clear := self._earthtime.DataLibrarySearchClearButton:
-                query = input.value.encode('utf-8')
+                query = search_input.value.encode('utf-8')
                 clear.click()
-                input.send_keys('*****')
+                search_input.send_keys('*****')
                 self.__clear = clear
                 self.__empty_results_msg = self._earthtime.DataLibraryEmptySearchResultsMessage
             else:
                 query = ''
-                input.send_keys('*****')
+                search_input.send_keys('*****')
                 self.__clear = self._earthtime.DataLibrarySearchClearButton
                 self.__empty_results_msg = self._earthtime.DataLibraryEmptySearchResultsMessage
 
             self.__clear.click()
 
             if query:
-                input.send_keys(query)
+                search_input.send_keys(query)
 
             if menu:
                 library.click()
@@ -122,10 +122,10 @@ class DLSearchEngine(Tool):
     def search(self, query: str, clear: bool = True) -> DLSearchResults:
         if self.inform():
             library = self._earthtime.DataLibraryMenu
-            input = self._earthtime.DataLibrarySearchInput
-            menu = input is Miss
+            search_input = self._earthtime.DataLibrarySearchInput
+            menu = search_input is Miss
 
-            if not input:
+            if not search_input:
                 library.click()
 
             if clear and self.__clear.is_displayed():
@@ -146,6 +146,9 @@ class DLSearchEngine(Tool):
 
             results[categories[-1].text] = self._earthtime['DataLibrarySearchFoundLabelsAfter', categories[-1].text]
 
-            return DLSearchResults([DLSearchResult(label, category, self._earthtime) for category, labels in results.items() for label in labels])
+            if menu:
+                library.click()
+
+            return DLSearchResults(query, [DLSearchResult(label, category, self._earthtime) for category, labels in results.items() for label in labels])
         else:
             return DLSearchResults()

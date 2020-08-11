@@ -101,7 +101,7 @@ class Hit:
         """The tag type of this element."""
         return self._element.parent.execute_script('return arguments[0].tagName', self._element)
 
-    def click(self, wait: Union[float, int]):
+    def click(self, wait: Union[float, int] = 0):
         """Clicks the element.
 
         Notes:

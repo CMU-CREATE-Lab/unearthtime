@@ -27,7 +27,7 @@ class Tool(ABC):
 
     def __init__(self, earthtime: EarthTime):
         raiseif(
-            earthtime is None or bool(earthtime),
+            earthtime is None or not bool(earthtime),
             UnearthtimeException('Invalid or inactive EarthTime page.')
         )
 
@@ -35,7 +35,7 @@ class Tool(ABC):
         self._informed = False
 
     def informable(self) -> bool:
-        return not self.__informed and bool(self._earthtime)
+        return not self._informed and bool(self._earthtime)
 
     @abstractmethod
     def inform(self) -> bool: return False

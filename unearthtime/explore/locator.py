@@ -3,31 +3,6 @@
 The difference between a `Locator` and a `ForcedLocator` is that a `Locator` will
 only return a `Hit` if the element is displayed. `ForcedLocator` returns a response
 according to what is returned from the DOM, whether the element is displayed or not.
-
-Examples:
-        Assumes `driver` is already defined, and loaded to 'https://earthtime.org/explore'.
-
-        ```
-        >>> from unearthtime.explore.locator import Locator, ForcedLocator
-        >>>
-        >>> logo = Locator('menu-logo', By.ID)
-        >>> logo
-        Locator[Term: menu-logo, By: ID] -> Hit
-        >>>
-        >>> logo(driver)
-        Hit[a1bd9191-86d3-471d-8bb6-a9e4c57b3a80]
-        >>>
-        >>> category_id = 'category-biodiversity'
-        >>> category_header = Locator(lambda ac: "h3[aria-controls=%s]" % ac)
-        >>>
-        >>> category_header(driver, category_id)
-        Miss
-        >>>
-        >>> forced_category_header = ForcedLocator.from_locator(category_header)
-        >>>
-        >>> forced_category_header(driver, category_id)
-        Hit[67c23942-f825-42b7-9b40-f4f64d2b1a9e]
-        ```
 """
 from __future__ import annotations
 

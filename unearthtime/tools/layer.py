@@ -137,6 +137,9 @@ class Layer(SelectableTool):
                     clear.click()
 
                 header = self._earthtime['CategoryHeader', self.__category_id]
+
+                if not header:
+                    return False
             elif clear := self._earthtime.DataLibrarySearchClearButton:
                 clear.click()
 
@@ -362,6 +365,9 @@ class Category(SelectableTool):
                     clear.click()
 
                 header = self._earthtime['CategoryHeader', self.__category_id]
+
+                if not header:
+                    return False
             elif clear := self._earthtime.DataLibrarySearchClearButton:
                 clear.click()
 

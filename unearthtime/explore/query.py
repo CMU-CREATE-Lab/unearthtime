@@ -78,7 +78,7 @@ def fclass(query: str, until: WaitType = None):
     if not until:
         return response_of(lambda parent: Hit(parent.find_element_by_class_name(query)) if parent else Miss)
     else:
-        return response_of(lambda parent: wait_for(parent).until(until(parent.find_element_by_class_name(query))) if parent else Miss)
+        return response_of(lambda parent: Hit(wait_for(parent).until(until(parent.find_element_by_class_name(query))) if parent else Miss))
 
 
 def fcss(query: str, until: WaitType = None):
@@ -94,7 +94,7 @@ def fcss(query: str, until: WaitType = None):
     if not until:
         return response_of(lambda parent: Hit(parent.find_element_by_css_selector(query)) if parent else Miss)
     else:
-        return response_of(lambda parent: wait_for(parent).until(until(parent.find_element_by_css_selector(query))) if parent else Miss)
+        return response_of(lambda parent: Hit(wait_for(parent).until(until(parent.find_element_by_css_selector(query))) if parent else Miss))
 
 
 def fid(query: str, until: WaitType = None):
@@ -110,7 +110,7 @@ def fid(query: str, until: WaitType = None):
     if not until:
         return response_of(lambda parent: Hit(parent.find_element_by_id(query)) if parent else Miss)
     else:
-        return response_of(lambda parent: wait_for(parent).until(until(parent.find_element_by_id(query))) if parent else Miss)
+        return response_of(lambda parent: Hit(wait_for(parent).until(until(parent.find_element_by_id(query))) if parent else Miss))
 
 
 def fname(query: str, until: WaitType = None):
@@ -126,7 +126,7 @@ def fname(query: str, until: WaitType = None):
     if not until:
         return response_of(lambda parent: Hit(parent.find_element_by_name(query)) if parent else Miss)
     else:
-        return response_of(lambda parent: wait_for(parent).until(until(parent.find_element_by_name(query))) if parent else Miss)
+        return response_of(lambda parent: Hit(wait_for(parent).until(until(parent.find_element_by_name(query))) if parent else Miss))
 
 
 def ftag(query: str, until: WaitType = None):
@@ -142,7 +142,7 @@ def ftag(query: str, until: WaitType = None):
     if not until:
         return response_of(lambda parent: Hit(parent.find_element_by_tag_name(query)) if parent else Miss)
     else:
-        return response_of(lambda parent: wait_for(parent).until(until(parent.find_element_by_tag_name(query))) if parent else Miss)
+        return response_of(lambda parent: Hit(wait_for(parent).until(until(parent.find_element_by_tag_name(query))) if parent else Miss))
 
 
 def fxpath(query: str, until: WaitType = None):
@@ -158,7 +158,7 @@ def fxpath(query: str, until: WaitType = None):
     if not until:
         return response_of(lambda parent: Hit(parent.find_element_by_xpath(query)) if parent else Miss)
     else:
-        return response_of(lambda parent: wait_for(parent).until(until(parent.find_element_by_xpath(query))) if parent else Miss)
+        return response_of(lambda parent: Hit(wait_for(parent).until(until(parent.find_element_by_xpath(query))) if parent else Miss))
 
 
 def fxclass(query: str, until: WaitType = None):
@@ -172,9 +172,9 @@ def fxclass(query: str, until: WaitType = None):
         - `(Union[WebDriver, WebElement])` -> `Hit`, `HitList`, `Miss`
     """
     if not until:
-        return response_of(lambda parent: Hit(parent.find_elements_by_class_name(query)) if parent else Miss)
+        return response_of(lambda parent: HitList(parent.find_elements_by_class_name(query)) if parent else Miss)
     else:
-        return response_of(lambda parent: wait_for(parent).until(until(parent.find_elements_by_class_name(query))) if parent else Miss)
+        return response_of(lambda parent: HitList(wait_for(parent).until(until(parent.find_elements_by_class_name(query))) if parent else Miss))
 
 
 def fxcss(query: str, until: WaitType = None):
@@ -188,9 +188,9 @@ def fxcss(query: str, until: WaitType = None):
         - `(Union[WebDriver, WebElement])` -> `Hit`, `HitList`, `Miss`
     """
     if not until:
-        return response_of(lambda parent: Hit(parent.find_elements_by_css_selector(query)) if parent else Miss)
+        return response_of(lambda parent: HitList(parent.find_elements_by_css_selector(query)) if parent else Miss)
     else:
-        return response_of(lambda parent: wait_for(parent).until(until(parent.find_elements_by_css_selector(query))) if parent else Miss)
+        return response_of(lambda parent: HitList(wait_for(parent).until(until(parent.find_elements_by_css_selector(query))) if parent else Miss))
 
 
 def fxid(query: str, until: WaitType = None):
@@ -204,9 +204,9 @@ def fxid(query: str, until: WaitType = None):
         - `(Union[WebDriver, WebElement])` -> `Hit`, `HitList`, `Miss`
     """
     if not until:
-        return response_of(lambda parent: Hit(parent.find_elements_by_id(query)) if parent else Miss)
+        return response_of(lambda parent: HitList(parent.find_elements_by_id(query)) if parent else Miss)
     else:
-        return response_of(lambda parent: wait_for(parent).until(until(parent.find_elements_by_id(query))) if parent else Miss)
+        return response_of(lambda parent: HitList(wait_for(parent).until(until(parent.find_elements_by_id(query))) if parent else Miss))
 
 
 def fxname(query: str, until: WaitType = None):
@@ -222,7 +222,7 @@ def fxname(query: str, until: WaitType = None):
     if not until:
         return response_of(lambda parent: Hit(parent.find_elements_by_name(query)) if parent else Miss)
     else:
-        return response_of(lambda parent: wait_for(parent).until(until(parent.find_elements_by_name(query))) if parent else Miss)
+        return response_of(lambda parent: HitList(wait_for(parent).until(until(parent.find_elements_by_name(query))) if parent else Miss))
 
 
 def fxtag(query: str, until: WaitType = None):
@@ -238,7 +238,7 @@ def fxtag(query: str, until: WaitType = None):
     if not until:
         return response_of(lambda parent: Hit(parent.find_elements_by_tag_name(query)) if parent else Miss)
     else:
-        return response_of(lambda parent: wait_for(parent).until(until(parent.find_elements_by_tag_name(query))) if parent else Miss)
+        return response_of(lambda parent: HitList(wait_for(parent).until(until(parent.find_elements_by_tag_name(query))) if parent else Miss))
 
 
 def fxxpath(query: str, until: WaitType = None):
@@ -252,9 +252,9 @@ def fxxpath(query: str, until: WaitType = None):
         - `(Union[WebDriver, WebElement])` -> `Hit`, `HitList`, `Miss`
     """
     if not until:
-        return response_of(lambda parent: Hit(parent.find_elements_by_xpath(query)) if parent else Miss)
+        return response_of(lambda parent: HitList(parent.find_elements_by_xpath(query)) if parent else Miss)
     else:
-        return response_of(lambda parent: wait_for(parent).until(until(parent.find_elements_by_xpath(query))) if parent else Miss)
+        return response_of(lambda parent: HitList(wait_for(parent).until(until(parent.find_elements_by_xpath(query))) if parent else Miss))
 
 
 def find(query: str, by: By, parent: WebObject, until: WaitType = None) -> ResponseType:

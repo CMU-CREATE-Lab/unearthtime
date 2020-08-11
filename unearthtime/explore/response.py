@@ -63,7 +63,7 @@ class Hit:
             return self._element.__getattribute__(attr)
         else:
             if attr in ('id_', 'class_'):
-                attr = attr[1:-1]
+                attr = attr[:-1]
 
             if (eattr := self.__getitem__(attr)) is not None:
                 return eattr

@@ -62,6 +62,9 @@ class Story(SelectableTool):
                 stories.click()
                 header = self._earthtime['ThemeHeader', self.__theme_id]
 
+                if not header:
+                    return False
+
             self.__theme_id = header.id_
 
             if header['aria-selected'] == 'false':
@@ -69,10 +72,10 @@ class Story(SelectableTool):
                 header.click()
 
             self.__theme = header.text
-            self.__radio = self._earthtime['StoryRadioButton', self.__theme_id]
-            self.__title = self._earthtime['StoryTitle', self.__theme_id].text
+            self.__radio = self._earthtime['StoryRadioButton', self.__story_id]
+            self.__title = self._earthtime['StoryTitle', self.__story_id].text
 
-            src = self._earthtime['StoryThumbnail', self.__theme_id].src
+            src = self._earthtime['StoryThumbnail', self.__story_id].src
 
             wstart, hstart = src.find('width=') + 6, src.find('height=') + 7
             wstop, hstop = src.find('&', wstart), src.find('&', hstart)
@@ -138,7 +141,7 @@ class Theme(SelectableTool):
 
     def __repr__(self):
         if self._informed:
-            return f'{Theme.__name__} [ {self.__theme_name}: {{%s\n}}]' % '\n\t'.join(map(str, self.__stories))
+            return f'{Theme.__name__} [ {self.__theme_name}: {{\n\t%s\n}}]' % '\n\t'.join(map(str, self.__stories))
         else:
             return f'Empty {Theme.__name__}'
 
@@ -219,6 +222,9 @@ class Theme(SelectableTool):
             if not header:
                 stories_menu.click()
                 header = self._earthtime['ThemeHeader', self.__theme_id]
+
+                if not header:
+                    return False
 
             self.__theme_id = header.id_
 

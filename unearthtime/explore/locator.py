@@ -58,10 +58,10 @@ class Locator:
         """
 
         raiseif(
-            (bool(args) or bool(kwargs) and not (
+            (bool(args) or bool(kwargs)) and not (
                     callable(self.terms) or
                     (is_nonstring_iterable(self.terms) and any(map(callable, self.terms)))
-            )),
+            ),
             UnearthtimeException('Locator does not have any callable terms.')
         )
 

@@ -103,7 +103,7 @@ class EarthTime:
             return self.__timelapse.__getattr__(name)
 
     def __getitem__(self, key: Union[str, tuple]):
-        return self.pull(key) if isinstance(key, str) else self.pull(*key)
+        return self.pull(key) if not (isinstance(key, tuple) and isinstance(key[-1], bool)) else self.pull(key[:-1], key[-1])
 
     def __repr__(self):
         return '%s:[%s]' % (EarthTime.__name__, self.__url)

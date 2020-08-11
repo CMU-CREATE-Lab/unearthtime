@@ -77,6 +77,13 @@ class DLSearchEngine(Tool):
         self.__empty_results_msg = None
         self.__input = None
 
+    @classmethod
+    def informed(cls, earthtime: EarthTime):
+        dls = cls(earthtime)
+        dls.inform()
+
+        return dls
+
     def clear(self):
         if self._informed and bool(self._earthtime) and self.__clear.is_displayed():
             self.__clear.click()
@@ -87,29 +94,31 @@ class DLSearchEngine(Tool):
             return bool(self._earthtime)
         elif self.informable():
             library = self._earthtime.DataLibraryMenu
-            search_input = self._earthtime.DataLibrarySearchInput
-            menu = search_input is Miss
+            self.__input = self._earthtime.DataLibrarySearchInput
+            menu = self.__input is Miss
 
-            if not search_input:
+            if not self.__input:
                 library.click()
-                search_input = self._earthtime.DataLibrarySearchInput
+                self.__input = self._earthtime.DataLibrarySearchInput
 
             if clear := self._earthtime.DataLibrarySearchClearButton:
-                query = search_input.value.encode('utf-8')
+                query = self.__input.value.encode('utf-8')
                 clear.click()
-                search_input.send_keys('*****')
+                self.__input.send_keys('*****')
+                sleep(1)
                 self.__clear = clear
                 self.__empty_results_msg = self._earthtime.DataLibraryEmptySearchResultsMessage
             else:
                 query = ''
-                search_input.send_keys('*****')
+                self.__input.send_keys('*****')
+                sleep(1)
                 self.__clear = self._earthtime.DataLibrarySearchClearButton
                 self.__empty_results_msg = self._earthtime.DataLibraryEmptySearchResultsMessage
 
             self.__clear.click()
 
             if query:
-                search_input.send_keys(query)
+                self.__input.send_keys(query)
 
             if menu:
                 library.click()
@@ -136,19 +145,20 @@ class DLSearchEngine(Tool):
             sleep(0.5)
 
             if self.__empty_results_msg.is_displayed():
-                return DLSearchResults()
+                return DLSearchResults(query)
 
             categories = self._earthtime.DataLibrarySearchFoundCategories
             results = {}
 
-            for i in range(len(categories) - 1):
-                results[categories[i].text] = self._earthtime['DataLibrarySearchFoundLabelsBetween', categories[i].text, categories[i + 1].text]
+            if categories:
+                for i in range(len(categories) - 1):
+                    results[categories[i].text] = self._earthtime['DataLibrarySearchFoundLabelsBetween', categories[i].text, categories[i + 1].text]
 
-            results[categories[-1].text] = self._earthtime['DataLibrarySearchFoundLabelsAfter', categories[-1].text]
+                results[categories[-1].text] = self._earthtime['DataLibrarySearchFoundLabelsAfter', categories[-1].text]
 
-            if menu:
-                library.click()
-
-            return DLSearchResults(query, [DLSearchResult(label, category, self._earthtime) for category, labels in results.items() for label in labels])
+            if results:
+                return DLSearchResults(query, [DLSearchResult(label, category, self._earthtime) for category, labels in results.items() for label in labels])
+            else:
+                return DLSearchResults(query)
         else:
             return DLSearchResults()

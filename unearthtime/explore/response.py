@@ -1,260 +1,191 @@
-"""Objects representing possible responses from a request to the DOM"""
-from __future__ import annotations
-from _algae.typing import ElementPredicate, MissType
-from _algae.utils import istrue
+"""The response module defines objects representing the various responses from querying the DOM."""
 
-from cv2 import cvtColor, COLOR_BGR2RGB, COLOR_BGR2GRAY
-from functools import cached_property, reduce
+from __future__ import annotations
+
 from io import BytesIO
-from numpy import array
+from time import sleep
+from typing import Iterable, Union
+
 from PIL import Image
+from cv2 import cvtColor, COLOR_BGR2RGB, COLOR_BGR2GRAY
+from numpy import array
 from selenium.common.exceptions import ElementClickInterceptedException
 from selenium.common.exceptions import ElementNotInteractableException
 from selenium.webdriver.remote.webelement import WebElement as Element
-from time import sleep
+
+from .._algae.exceptions import UnearthtimeException
+from .._algae.utils import raiseif
+
+
+class MissType(type):
+    """Metaclass representing a failed response from the DOM."""
+
+    def __bool__(cls): return False
+
+    def __call__(cls): return cls
+
+    def __hash__(cls): return hash(id(cls))
+
+    def __repr__(cls): return 'Miss'
+
 
 class Miss(metaclass=MissType):
-    """Represents a missed request to the DOM
-    
-    Notes:
-    - `Miss` is always `False`.
-    """
-	
+    """A failed response from the DOM."""
+
+
 class Hit:
-    """A successful return from a request."""
+    """A successful response from the DOM."""
 
     def __init__(self, element: Element):
-        self._element = element 
-        self.__display = self._parent.execute_script('return arguments[0].style.display', element)
+        self._element = element
+        self.__display = element.parent.execute_script('return arguments[0].style.display', element)
+
+    def __eq__(self, other: Union[Element, 'Hit']):
+        return self._element == other if isinstance(other, Element) else self._element == other._element
 
     def __getattr__(self, attr: str):
-        """Allows the `HTML` and js attributes of an element to be accessed using dot-notation.
+        """Exposes `HTML` and `javascript` attributes, allowing access via dot-notation.
 
         Parameters:
-        - `attr` : `str`
-            * The name of a tag or javascript attribute
+            - `attr` : `str`
 
         Returns:
-        - `str`
-            * The value of the attribute
+            - `str`
 
-        Exceptions:
-        - `AttributeError`
-            * If the element doesn't have the attribute
-        
+        Raises:
+            - `AttributeError` : Invalid `attr`.
+
         Notes:
-        - `id` and `class` are special cases and can be accessed by appending an 
-        underscore to the end
+            - `id` and `class` are special cases and these tag attributes can be accessed
+            by appending an underscore
         """
         if hasattr(self._element, attr):
             return self._element.__getattribute__(attr)
-        
-        if attr == 'id_' or attr == 'class_':
-            attr = attr.rstrip('_')
-
-        if (eattr := self.__getitem__(attr)) is not None:
-            return eattr
-        elif (jattr := self._parent.execute_script('return arguments[0].%s;' % attr, self._element)) is not None:
-            return jattr
         else:
-            raise AttributeError(
-                ':[%r]: Input is not an attribute of this element.' % attr)
+            if attr in ('id_', 'class_'):
+                attr = attr[1:-1]
+
+            if (eattr := self.__getitem__(attr)) is not None:
+                return eattr
+            elif (jattr := self._element.parent.execute_script('return arguments[0].%s' % attr, self._element)) is not None:
+                return Hit(jattr) if isinstance(jattr, Element) else jattr
+            else:
+                raise AttributeError(':[%r]: Invalid attribute.' % attr)
 
     def __getitem__(self, attr: str):
-        """Retrieves an attribute of the element.
-        
+        """Retrieves a tag attribute of the element.
+
         Parameters:
-        - `attr` : `str`
-            * The name of a tag attribute
+            - `attr`: `str`
 
         Returns:
-        - `str`
-            * The value of the attribute
-
-        Notes:
-        - Where `Hit.__getattr__(attr)` will raise an `AttributeError` if the attribute isn't present, this method will return `None`
+            - `str`
         """
         return self.get_attribute(attr)
 
-    def __repr__(self): return 'Hit[%s]' % self._id
+    def __repr__(self):
+        return '%s[%s]' % (Hit.__name__, self._id)
+
+    @property
+    def driver_session_id(self):
+        """The session if of the Selenium driver for this element."""
+        return self._element.parent.session_id
 
     @property
     def selenium_id(self):
-        """The Selenium specific id of this element""" 
-        return self._id
+        """The internal Selenium id of the element."""
+        return self._element.id
 
     @property
-    def session(self):
-        """The Selenium specific session id of the `WebDriver` for this element""" 
-        return self._element._parent.session_id
+    def tag_name(self) -> str:
+        """The tag type of this element."""
+        return self._element.parent.execute_script('return arguments[0].tagName', self._element)
 
-    def apply(self, method: Callable): 
-        """Applies a method to this element
-        
-        Parameters:
-        - `method` : `Callable(Element)`
-            * A method that can accept a `WebElement` as it's only argument
+    def click(self, wait: Union[float, int]):
+        """Clicks the element.
 
-        Returns:
-        - `Any`
-            * The result of `method(self)`
-
-        """
-        return method(self)
-
-    def click(self, wait: Union[float, int] = 0.5):
-        """Clicks this element if it is clickable
-        
-        Parameters:
-        - `wait` : `float`, `int` = `0.5`
-            * The amount of time to wait after clicking an element
+        Notes:
+            - If the element is not in view when the first click is tried,
+            an attempt will be made to scroll into view, before trying to
+            click it again.
         """
         try:
             self._element.click()
         except (ElementClickInterceptedException, ElementNotInteractableException):
-            self._element._parent.execute_script(
-                'arguments[0].scrollIntoView(); arguments[0].click();', self._element)
+            self._element.parent.execute_script('arguments[0].scrollIntoView(); arguments[0].click();', self._element)
 
-        if isinstance(wait, (int, float)) and wait > 0:
+        if wait > 0:
             sleep(wait)
 
     def hide(self):
-        """Hides this element if it is displayed"""
+        """Hides the element by setting the display in the style attribute to 'none'."""
         if self.__display != 'none':
-            self._element._parent.execute_script("arguments[0].style.display='none'", self._element)
+            self._element.parent.execute_script("arguments[0].style.display='none'", self._element)
 
-    def if_(self, condition: Union[bool, ElementPredicate]):
-        """Checks a condition or applies one to this element.
-
-        Parameters:
-        - `condition`
-            * A `bool` or predicate that can accept a `WebElement` as it's only parameter
+    def next_sibling(self):
+        """The sibling element following this element.
 
         Returns:
-        - `Hit`, `Miss`
-            * This element if `condition`, `condition(self)` is `True`, `Miss` otherwise
+            - `Hit`
         """
-        return self if istrue(condition) or (
-            callable(condition) and istrue(condition(self))) else Miss
+        return Hit(self._element.parent.execute_script('return arguments[0].nextElementSibling', self._element))
 
-    def parent(self): return Hit(self._element.find_element_by_xpath('./..'))
+    def parent_element(self):
+        """The parent of this element in the DOM.
+
+        Returns:
+            - `Hit`
+        """
+        return Hit(self._element.find_element_by_xpath('./..'))
+
+    def previous_sibling(self):
+        """The sibling element preceding this element.
+
+        Returns:
+            - `Hit`
+        """
+        return Hit(self._element.parent.execute_script('return arguments[0].previousElementSibling', self._element))
 
     def reset_display(self):
-        """Sets the display property back to what it was if one was present"""
-        self._element._parent.execute_script("arguments[0].style.display='%s';" % self.__display)
+        """Sets the display in the style of this element back to it's original state."""
+        self._element.parent.execute_script("arguments[0].style.display='%s'" % self.__display, self._element)
 
-    def screenshot(self, mode='png'):
-        """Takes a screenshot of the element
+    def screenshot(self, mode: str = 'png'):
+        """Takes a screenshot of this element.
 
-        Parameters:
-        - `mode`: `str` = `'png'`
-            * One of: 
-                * 'base64' :&#8658; `str`
-                * 'png' :&#8658; `bytes` 
-                * 'image' :&#8658; `PIL.Image`
-                * 'array' :&#8658; `numpy.ndarray`
-                * 'rgb' :&#8658; `numpy.ndarray`
-                * 'gray' :&#8658; `numpy.ndarray`
+        Raises:
+            - `UnearthtimeException` : Parent `WebDriver` isn't a chrome driver.
+
+        Notes:
+            - This is a Chrome specific capability
         """
-        if mode == 'png':
+        raiseif(
+            self._element.parent != 'chrome',
+            UnearthtimeException('Element screenshot only available for Chrome driver.')
+        )
+
+        if mode == 'png' or mode == 'PNG':
             return self._element.screenshot_as_png
         elif mode == 'base64':
             return self._element.screenshot_as_base64
-        elif mode == 'img':
+        elif mode == 'img' or mode == 'image':
             return Image.open(BytesIO(self._element.screenshot_as_png))
-        elif mode == 'array':
-            return array(Image.open(BytesIO(self._element.screenshot_as_png)))
-        elif mode == 'rgb':
+        elif mode == 'array' or mode == 'ndarray':
+            return array((Image.open(BytesIO(self._element.screenshot_as_png))))
+        elif mode == 'rgb' or mode == 'RGB':
             return cvtColor(array(Image.open(BytesIO(self._element.screenshot_as_png))), COLOR_BGR2RGB)
-        elif mode == 'gray':
+        elif mode == 'gray' or mode == 'grey':
             return cvtColor(array(Image.open(BytesIO(self._element.screenshot_as_png))), COLOR_BGR2GRAY)
-        
-
-    def verify(self, condition: ElementPredicate):
-        """Applies a condition to this element
-
-        Parameters:
-        - `condition`
-            * A predicate that can accept a `WebElement` as it's only parameter
-
-        Returns:
-        - `True`, `False`
-            The result of `condition(self)`
-        """ 
-        return condition(self)
 
 
 class HitList(tuple):
-    """A tuple of successful responses from a request"""
+    """A collection of successful responses from the DOM."""
 
-    def __new__(cls, hits: Iterable[Element] = None):
+    def __new__(cls, hits: Iterable[Union[Element, Hit]] = None):
         if hits:
             return tuple.__new__(cls, (hit if isinstance(hit, Hit) else Hit(hit) for hit in hits))
         else:
             return tuple.__new__(cls)
 
-    def __bool__(self): return len(self) > 0
-
-    def __getitem__(self, key: Union[Callable[[Element], bool], int]): 
-        """Retrieves either a specific hit or applies a condition to all of them
-        
-        Parameters:
-        - `key` : `int`, `Callable(Element)` &#8658; `bool`
-            * Index of an element or predicate that can accept a `WebElement` as its only parameter
-
-        Returns:
-        - `Hit`
-            * If `key` is an `int`, the hit at that index is returned
-
-        - `HitList`
-            * If `key` is a condition, a list of `Hit`s for which `conditional(Hit)` is `True`
-        """
-        return HitList(
-        hit for hit in self if istrue(key(hit))) if callable(key) else super().__getitem__(key)
-
-    def __add__(self, x): return HitList(tuple(self) + x)
-
-    def __repr__(self): return '%s[\n\t%s\n]' % (HitList.__name__, '\n\t'.join(map(str, self))) if len(self) > 0 else '%s[]' % HitList.__name__
-
-    def apply(self, method: Callable): 
-        """Applies a method to each hit
-
-        Parameters:
-        - `method` : `Callable(Element)`
-            * A method that can accept a `WebElement` as it's only argument
-
-        Returns:
-        - `list`
-            * The result of applying the method
-        """
-        return list(map(method, self))
-
-    def verify(self, condition: ElementPredicate):
-        """Applies a conditional to each hit
-
-        Parameters:
-        - `method` : `Callable(Element)`
-            * A predicate that can accept a `WebElement` as it's only argument
-
-
-        Returns:
-        - `True`, `False`
-            * The result of `and`-ing  the results of `condition(Hit)` for each hit
-        """
-        return reduce(lambda x, y: x and y, [istrue(condition(hit)) for hit in self], True)
-
-    def where(self, condition: Union[bool, ElementPredicate]):
-        """Checks a condition or applies one to each hit
-
-        Parameters:
-        - `condition` : `int`, `Callable(Element)` &#8658; `bool`
-            * Index of an element or predicate that can accept a `WebElement` as its only parameter
-
-        Returns:
-        - `HitList`
-            * This list if `condition` is `True` or a list of hits where `condition(Hit)` is `True`. An empty list returned otherwise
-        """
-        if isinstance(condition, bool):
-            return self if condition else HitList()
-        else:
-            return HitList(filter(condition, self))
+    def __repr__(self):
+        return '%s[%s]' % (HitList.__name__, '\n\t%s\n' % '\n\t'.join(map(str, self)) if bool(self) else '')

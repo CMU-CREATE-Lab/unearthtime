@@ -1,12 +1,18 @@
-from functools import wraps
+from __future__ import annotations
 
-def returnonexception(ret_val, exception: Exception):
+from functools import wraps
+from typing import Tuple, Union
+
+
+def returnonexception(ret, exc: Union[Exception, Tuple[Exception]]):
     def decorator(method):
         @wraps(method)
         def wrapper(*args, **kwargs):
             try:
                 return method(*args, **kwargs)
-            except exception:
-                return ret_val
+            except exc:
+                return ret
+
         return wrapper
+
     return decorator

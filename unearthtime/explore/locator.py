@@ -1,266 +1,283 @@
+"""The locator module defines classes for defining repeatable queries to the DOM.
+
+The difference between a `Locator` and a `ForcedLocator` is that a `Locator` will
+only return a `Hit` if the element is displayed. `ForcedLocator` returns a response
+according to what is returned from the DOM, whether the element is displayed or not.
+
+Examples:
+        Assumes `driver` is already defined, and loaded to 'https://earthtime.org/explore'.
+
+        ```
+        >>> from unearthtime.explore.locator import Locator, ForcedLocator
+        >>>
+        >>> logo = Locator('menu-logo', By.ID)
+        >>> logo
+        Locator[Term: menu-logo, By: ID] -> Hit
+        >>>
+        >>> logo(driver)
+        Hit[a1bd9191-86d3-471d-8bb6-a9e4c57b3a80]
+        >>>
+        >>> category_id = 'category-biodiversity'
+        >>> category_header = Locator(lambda ac: "h3[aria-controls=%s]" % ac)
+        >>>
+        >>> category_header(driver, category_id)
+        Miss
+        >>>
+        >>> forced_category_header = ForcedLocator.from_locator(category_header)
+        >>>
+        >>> forced_category_header(driver, category_id)
+        Hit[67c23942-f825-42b7-9b40-f4f64d2b1a9e]
+        ```
+"""
 from __future__ import annotations
 
-from _algae.exceptions import UnearthtimeException
-from _algae.typing import WebObject
-from _algae.utils import raiseif
-from _algae.warnings import overridinguseof
-
-from .query import By, find, findall, Response, Wait
-from .response import Hit, HitList, Miss
-
 from dataclasses import dataclass
-from selenium.webdriver.remote.webdriver import WebDriver as Driver
-from selenium.webdriver.remote.webelement import WebElement as Element
 from typing import Callable, Iterable, Union
 
-__all__ = ['Locator', 'ForcedLocator']
+from .query import By, find, find_all, ResponseType, WaitType, WebObject
+from .response import Hit, HitList, Miss
+from .._algae.exceptions import UnearthtimeException
+from .._algae.utils import is_nonstring_iterable, raiseif, where
+from .._algae.warnings import overridinguseof
+
+__all__ = ['ForcedLocator', 'Locator']
+
 
 @dataclass
 class Locator:
-	"""A 'self-aware' element locator
+    """A 'self-aware' element locator.
 
-	Attributes:
-	- `terms`
-		* A string, method that receives strings and returns a string, or list of strings and/or methods
+    Given a successful response from the DOM, the element is only returned
+    if it is displayed.
 
-		* The `term` is used to find element in the DOM. It can
-		represent an element id, class, name, etc...
+    Attributes:
+        - `terms` : `str`, `Callable`, `Iterable[`str`, `Callable`]
+        - `by` : `By`, `Iterable[By]` = `By.CSS`
+        - `list_` : `bool` = `False`
+        - `until` : `WaitType` = `None`
+    """
+    terms: Union[str, Callable, Iterable[Union[str, Callable]]]
+    by: Union[By, Iterable[By]] = By.CSS
+    list_: bool = False
+    until: WaitType = None
 
-	- `by`: optional
-		* An optional enum value signaling what the `term` represents. Defaults to
-		By.CSS
+    def __call__(self, parent: WebObject, *args, until: WaitType = None, **kwargs) -> ResponseType:
+        """Sends a request to the DOM.
 
-	- `list_`: optional
-		* A optional flag signaling whether or not to search for a single (default) or list of elements
+        Parameters:
+            - `parent` : `WebDriver`, `WebElement`
+            - `*args`
+            - `until` : `(WebDriver)` -> `Hit`, `HitList`, `False` = None
+            - `**kwargs`
 
-	- `until`: optional
-		* An optional permanent wait condition to apply when trying to retrieve this element.
+        Returns:
+            - `Hit`
+            - `HitList`
+            - `Miss`
 
-		* It should be either a method or lambda expression accepting a `WebElement`
-		and returning `True` or `False`
+        Raises:
+            - `UnearthtimeException` :
+                - Arguments are passed in without any callable locators.
+                - No arguments are passed in for callable locators.
+                - Invalid `parent`.
+        """
 
-	Examples:
-	
-	```py
-	>>> from selenium.webdriver import Chrome
-	>>> 
-	>>> drv = Chrome('drivers/chromedriver.exe')
-	>>> drv.get('https://earthtime.org/explore')
-	>>> drv.maximize_window()
-	>>> 
-	>>> logo = Locator('menu-logo', By.ID)
-	>>> logo
-	Locator[Term: menu-logo, By: ID]::Hit
-	>>>
-	>>> logo(drv)
-	Hit[a1bd9191-86d3-471d-8bb6-a9e4c57b3a80]
-	>>>
-	>>> cid = 'category-biodiversity'
-	>>> cheader = Locator(lambda ac: "h3[aria-controls='%s']" % ac)
-	>>> ctable = Locator(lambda alb: 'table#%s')
-	>>> 
-	>>> cheader(drv, cid)
-	Hit[67c23942-f825-42b7-9b40-f4f64d2b1a9e]
-	>>> ctable(drv, cid)
-	Hit[00dcd198-608f-4f1f-8c14-fb594eeb6eee]
-	>>> 
-	>>> from selenium.webdriver.support import expected_conditions as EC
-	>>> 
-	>>> legend_no_ec = Locator('layers-legend', By.ID)
-	>>> legend_with_ec = Locator('layers-legend', By.ID, until=EC.visibility_of)
-	>>> 
-	>>> legend_no_ec(drv)
-	Hit[7099af01-2a98-44f9-8a14-c93fcf762111]
-	>>>
-	>>> legend_with_ec(drv)
-	Miss
-	>>> 
-	```
-	"""
-	terms: Union[str, Callable, Iterable[Callable]]
-	by: Union[By, Iterable[By]] = By.CSS
-	list_: bool = False
-	until: Wait = None
+        raiseif(
+            (bool(args) or bool(kwargs) and not (
+                    callable(self.terms) or
+                    (is_nonstring_iterable(self.terms) and any(map(callable, self.terms)))
+            )),
+            UnearthtimeException('Locator does not have any callable terms.')
+        )
 
-	def __call__(self, parent: WebObject, *args, until: Wait = None, **kwargs) -> Response:
-		raiseif(
-			(bool(args) or bool(kwargs)) and not (
-				callable(self.terms) or 
-				(isinstance(self.terms, Iterable) and any(map(callable, self.terms)))), 
-			UnearthtimeException('Term does not take any arguments.'))
+        raiseif(
+            not (bool(args) or bool(kwargs)) and (
+                    callable(self.terms) or
+                    (is_nonstring_iterable(self.terms) and any(map(callable, self.terms)))
+            ),
+            UnearthtimeException('No arguments provided for callable term(s).')
+        )
 
-		raiseif(
-			not (bool(args) or bool(kwargs)) and (
-				callable(self.terms)  or 
-				(isinstance(self.terms, Iterable) and any(map(callable, self.terms)))), 
-			UnearthtimeException('Not enough arguments for term.'))
+        raiseif(
+            parent is None,
+            UnearthtimeException('No driver or element provided to locate element.')
+        )
 
-		raiseif(
-			parent is None, 
-			UnearthtimeException('No parent to find this element from.'))
+        if until and self.until:
+            overridinguseof(self.until, until)
+        else:
+            until = self.until
 
-		if until and self.until:
-			overridinguseof(self.until, until)
-		else:
-			until = self.until
+        if is_nonstring_iterable(self.terms):
+            if isinstance(self.by, Iterable):
+                raiseif(
+                    len(self.terms) != len(self.by),
+                    UnearthtimeException('Insufficient term-by pairs.')
+                )
+                bys = self.by
+            else:
+                bys = [self.by] * len(self.terms)
 
-		if isinstance(self.terms, Iterable) and not isinstance(self.terms, str):
-			if isinstance(self.by, Iterable):
-				raiseif(
-					len(self.terms) != len(self.by),
-					UnearthtimeException('Insufficient term-by pairs.')
-				)
+            for term, by in zip(self.terms, bys):
+                query = term(*args, **kwargs) if callable(term) else term
 
-				for term, by in zip(self.terms, self.by):
-					query = term(*args, **kwargs) if callable(term) else term
+                if self.list_:
+                    if (hits := find_all(query, by, parent, until)) and where(lambda h: h.is_displayed(), hits):
+                        return hits
+                elif (hit := find(query, by, parent, until)) and hit.is_displayed():
+                    return hit
+            else:
+                return Miss
+        else:
+            query = self.terms(*args, **kwargs) if callable(self.terms) else self.terms
 
-					if self.list_:
-						if (hits := findall(query, by, parent, until)) and hits.where(lambda x: x.is_displayed()):
-							return hits
-					elif (hit := find(query, by, parent, until)) and hit.is_displayed():
-							return hit
-				else:
-					return Miss
-			else:
-				for term in self.terms:
-					query = term(*args, **kwargs) if callable(term) else term
-					
-					if self.list_:
-						if (hits := findall(query, self.by, parent, until)) and hits.where(lambda x: x.is_displayed()):
-							return hits
-					elif (hit := find(query, self.by, parent, until)) and hit.if_(lambda x: x.is_displayed()):
-							return hit
-				else:
-					return Miss
+            if self.list_:
+                if (hits := find_all(query, self.by, parent, until)) and where(lambda h: h.is_displayed(), hits):
+                    return hits
+            elif (hit := find(query, self.by, parent, until)) and hit.is_displayed():
+                return hit
+            else:
+                return Miss
 
-		else:
-			query = self.terms(*args, **kwargs) if callable(self.terms) else self.terms
+    def __repr__(self):
+        if is_nonstring_iterable(self.terms):
+            if isinstance(self.by, Iterable):
+                raiseif(
+                    len(self.terms) != len(self.by),
+                    UnearthtimeException('Insufficient term-by pairs.')
+                )
+                bys = self.by
+            else:
+                bys = [self.by] * len(self.terms)
 
-			if self.list_:
-				if (hits := findall(query, self.by, parent, until)) and hits.where(lambda x: x.is_displayed()):
-					return hits
-				else:
-					return Miss
-			elif (hit := find(query, self.by, parent, until)) and hit.if_(lambda x: x.is_displayed()):
-					return hit
-			else:
-				return Miss
+            return "[\n\t%s\n]" % '\n\t'.join(
+                ["%s[Term: %s, By: %s] \u2192 %s" % (
+                    Locator.__name__,
+                    term,
+                    by.value.display_name.lstrip('by-').replace('-', ' ').upper(),
+                    HitList.__name__ if self.list_ else Hit.__name__) for term, by in zip(self.terms, bys)])
 
-	def __repr__(self):
-		if isinstance(self.terms, Iterable) and not isinstance(self.terms, str):
-			if isinstance(self.by, Iterable):
-				raiseif(
-					len(self.terms) != len(self.by),
-					UnearthtimeException('Insufficient term-by pairs.')
-				)
+        else:
+            return "%s[Term: %s, By: %s] \u2192 %s" % (
+                Locator.__name__,
+                self.terms,
+                self.by.value.display_name.lstrip('by-').replace('-', ' ').upper(),
+                HitList.__name__ if self.list_ else Hit.__name__)
 
-				return "[\n\t%s\n]" % '\n\t'.join(
-					["Locator[Term: %s, By: %s] \u2192 %s" % (
-						term, 
-						by.value.display_name.lstrip('by-').replace('-', ' ').upper(), 
-						'HitList' if self.list_ else 'Hit') for term, by in zip(self.terms, self.by)])
-			else:
-				return "[\n\t%s\n]" % '\n\t'.join(
-					["Locator[Term: %s, By: %s] \u2192 %s" % (
-						term, 
-						self.by.value.display_name.lstrip('by-').replace('-', ' ').upper(), 
-						'HitList' if self.list_ else 'Hit') for term in self.terms])
-		else:
-			return "Locator[Term: %s, By: %s] \u2192 %s" % ( 
-			self.terms,
-			self.by.value.display_name.lstrip('by-').replace('-', ' ').upper(),
-			'HitList' if self.list_ else 'Hit')
 
 class ForcedLocator(Locator):
+    """A 'self-aware' element locator.
 
-	@classmethod
-	def from_locator(cls, locator: Locator): return cls(locator.terms, locator.by, locator.list_, locator.until)
+    This locator does not check whether an element is displayed
+    given a successful query to the DOM.
 
-	def __call__(self, parent: WebObject, *args, until: Wait = None, **kwargs) -> Response:
-		raiseif(
-			(bool(args) or bool(kwargs)) and not (
-				callable(self.terms) or 
-				(isinstance(self.terms, Iterable) and any(map(callable, self.terms)))), 
-			UnearthtimeException('Term does not take any arguments.'))
+    Attributes:
+        - `terms` : `str`, `Callable`, `Iterable[`str`, `Callable`]
+        - `by` : `By`, `Iterable[By]` = `By.CSS`
+        - `list_` : `bool` = `False`
+        - `until` : `WaitType` = `None`
+    """
 
-		raiseif(
-			not (bool(args) or bool(kwargs)) and (
-				callable(self.terms)  or 
-				(isinstance(self.terms, Iterable) and any(map(callable, self.terms)))), 
-			UnearthtimeException('Not enough arguments for term.'))
+    @classmethod
+    def from_locator(cls, locator: Locator):
+        return cls(locator.terms, locator.by, locator.list_, locator.until)
 
-		raiseif(
-			parent is None, 
-			UnearthtimeException('No parent to find this element from.'))
+    def __call__(self, parent: WebObject, *args, until: WaitType = None, **kwargs) -> ResponseType:
+        """Sends a request to the DOM.
 
-		if until and self.until:
-			overridinguseof(self.until, until)
-		else:
-			until = self.until
+        Parameters:
+            - `parent` : `WebDriver`, `WebElement`
+            - `*args`
+            - `until` : `(WebDriver)` -> `Hit`, `HitList`, `False` = None
+            - `**kwargs`
 
-		if isinstance(self.terms, Iterable) and not isinstance(self.terms, str):
-			if isinstance(self.by, Iterable):
-				raiseif(
-					len(self.terms) != len(self.by),
-					UnearthtimeException('Insufficient term-by pairs.')
-				)
+        Returns:
+            - `Hit`
+            - `HitList`
+            - `Miss`
 
-				for term, by in zip(self.terms, self.by):
-					query = term(*args, **kwargs) if callable(term) else term
+        Raises:
+            - `UnearthtimeException` :
+                - Arguments are passed in without any callable locators.
+                - No arguments are passed in for callable locators.
+                - Invalid `parent`.
+        """
 
-					if self.list_:
-						if (hits := findall(query, by, parent, until)):
-							return hits
-					elif (hit := find(query, by, parent, until)):
-							return hit
-				else:
-					return Miss
-			else:
-				for term in self.terms:
-					query = term(*args, **kwargs) if callable(term) else term
-					
-					if self.list_:
-						if (hits := findall(query, self.by, parent, until)):
-							return hits
-					elif (hit := find(query, self.by, parent, until)):
-							return hit
-				else:
-					return Miss
+        raiseif(
+            (bool(args) or bool(kwargs) and not (
+                    callable(self.terms) or
+                    (is_nonstring_iterable(self.terms) and any(map(callable, self.terms)))
+            )),
+            UnearthtimeException('Locator does not have any callable terms.')
+        )
 
-		else:
-			query = self.terms(*args, **kwargs) if callable(self.terms) else self.terms
+        raiseif(
+            not (bool(args) or bool(kwargs)) and (
+                    callable(self.terms) or
+                    (is_nonstring_iterable(self.terms) and any(map(callable, self.terms)))
+            ),
+            UnearthtimeException('No arguments provided for callable term(s).')
+        )
 
-			if self.list_:
-				if (hits := findall(query, self.by, parent, until)):
-					return hits
-				else:
-					return Miss
-			elif (hit := find(query, self.by, parent, until)):
-					return hit
-			else:
-				return Miss
+        raiseif(
+            parent is None,
+            UnearthtimeException('No driver or element provided to locate element.')
+        )
 
-	def __repr__(self):
-		if isinstance(self.terms, Iterable) and not isinstance(self.terms, str):
-			if isinstance(self.by, Iterable):
-				raiseif(
-					len(self.terms) != len(self.by),
-					UnearthtimeException('Insufficient term-by pairs.')
-				)
+        if until and self.until:
+            overridinguseof(self.until, until)
+        else:
+            until = self.until
 
-				return "[\n\t%s\n]" % '\n\t'.join(
-					["ForcedLocator[Term: %s, By: %s] \u2192 %s" % (
-						term, 
-						by.value.display_name.lstrip('by-').replace('-', ' ').upper(), 
-						'HitList' if self.list_ else 'Hit') for term, by in zip(self.terms, self.by)])
-			else:
-				return "[\n\t%s\n]" % '\n\t'.join(
-					["ForcedLocator[Term: %s, By: %s] \u2192 %s" % (
-						term, 
-						self.by.value.display_name.lstrip('by-').replace('-', ' ').upper(), 
-						'HitList' if self.list_ else 'Hit') for term in self.terms])
-		else:
-			return "Locator[Term: %s, By: %s] \u2192 %s" % ( 
-			self.terms,
-			self.by.value.display_name.lstrip('by-').replace('-', ' ').upper(),
-			'HitList' if self.list_ else 'Hit')
+        if is_nonstring_iterable(self.terms):
+            if isinstance(self.by, Iterable):
+                raiseif(
+                    len(self.terms) != len(self.by),
+                    UnearthtimeException('Insufficient term-by pairs.')
+                )
+                bys = self.by
+            else:
+                bys = [self.by] * len(self.terms)
+
+            for term, by in zip(self.terms, bys):
+                query = term(*args, **kwargs) if callable(term) else term
+
+                if self.list_:
+                    if hits := find_all(query, by, parent, until):
+                        return hits
+                elif hit := find(query, by, parent, until):
+                    return hit
+            else:
+                return Miss
+        else:
+            query = self.terms(*args, **kwargs) if callable(self.terms) else self.terms
+
+            if self.list_:
+                return find_all(query, self.by, parent, until)
+            else:
+                return find(query, self.by, parent, until)
+
+    def __repr__(self):
+        if is_nonstring_iterable(self.terms):
+            if isinstance(self.by, Iterable):
+                raiseif(
+                    len(self.terms) != len(self.by),
+                    UnearthtimeException('Insufficient term-by pairs.')
+                )
+                bys = self.by
+            else:
+                bys = [self.by] * len(self.terms)
+
+            return "[\n\t%s\n]" % '\n\t'.join(
+                ["%s[Term: %s, By: %s] \u2192 %s" % (
+                    ForcedLocator.__name__,
+                    term,
+                    by.value.display_name.lstrip('by-').replace('-', ' ').upper(),
+                    HitList.__name__ if self.list_ else Hit.__name__) for term, by in zip(self.terms, bys)])
+
+        else:
+            return "%s[Term: %s, By: %s] \u2192 %s" % (
+                ForcedLocator.__name__,
+                self.terms,
+                self.by.value.display_name.lstrip('by-').replace('-', ' ').upper(),
+                HitList.__name__ if self.list_ else Hit.__name__)

@@ -1,6 +1,6 @@
 # UnearthTime
 
-`UnearthTime` is a flexible automation framework for testing **EarthTime** using [`Selenium`](https://selenium-python.readthedocs.io/).
+`UnearthTime` is a flexible automation framework for **EarthTime** built primarily using [`Selenium`](https://selenium-python.readthedocs.io/).
 
 ## Installation
 
@@ -10,10 +10,16 @@ Download `.whl` under Releases
 pip install unearthtime-0.1.0a0-py3-none-any.whl
 ```
 
-or
+Install from git
 
 ```
 pip install git+https://github.com/CMU-CREATE-Lab/unearthtime.git#egg=unearthtime
+```
+
+Install from git using specific tag version.
+
+```
+pip install git+https://github.com/CMU-CREATE-Lab/unearthtime.git@v0.1.0-alpha#egg=unearthtime
 ```
  
 ## Examples

@@ -9,6 +9,12 @@ Download `.whl` under Releases
 ```
 pip install unearthtime-0.1.0a0-py3-none-any.whl
 ```
+
+or
+
+```
+pip install git+https://github.com/CMU-CREATE-Lab/unearthtime.git#egg=unearthtime
+```
  
 ## Examples
 

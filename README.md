@@ -51,8 +51,8 @@ with EarthTime.explore(driver=lambda: Firefox(executable_path='./geckodriver.exe
 from unearthtime.tools.layer import Layer
 
 with EarthTime.explore(driver=lambda: Firefox(executable_path='./geckodriver.exe')) as earthtime:
-    selected_checkboxes = list(map(lambda element: element.checked, earthtime.pull('DataLibraryCheckboxes', forced=True)))
-    layers = [Layer.from_element(checkbox.parent_element(), earthtime) for checkbox in selected_checkboxes)]  
+    selected_checkboxes = earthtime.CheckedLayerCheckboxes
+    layers = [Layer.from_element(checkbox.parent_element(), earthtime) for checkbox in selected_checkboxes)]
     
 ## Testing Draw Times of Layers in Data Library of 'https://earthtime.org/explore'
 

@@ -150,6 +150,14 @@ class Library(metaclass=LocatorReference):
     ],
         list_=True)
 
+    CheckedLayerCheckboxes = Locator([
+        "div.map-layer-div:%s > table:not([id='category-base-layers']) label > input:checked" % DISPLAYED,
+        "div#featured-layers > table:not([id='category-base-layers']) label > input:checked"
+    ])
+
+    FeaturedLayersShowMoreButton = Locator("div#show-more-layers:not([class='active'])")
+    FeaturedLayersShowLessButton = Locator("div#show-more-layers[class='active']")
+
     CategoryHeader = Locator([
         lambda id_: "h3#%s" % id_,
         lambda ac: "h3[aria-controls='%s']" % prefix(ac, 'category-'),

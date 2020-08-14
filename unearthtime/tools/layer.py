@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections import namedtuple
+from dataclasses import dataclass
 from time import sleep
 from timeit import default_timer as timer
 from typing import Union
@@ -17,7 +17,17 @@ from .._algae.utils import raiseif
 from ..earthtime import EarthTime
 from ..explore.response import Hit, Miss, MissType
 
-DrawnLayer = namedtuple('DrawnLayer', ['name', 'title', 'draw_time', 'draw_calls', 'drawn'])
+@dataclass
+class DrawnLayer:
+    name: str
+    title: str
+    draw_time: float
+    draw_calls: int
+    drawn: bool
+
+    def __bool__(self): return bool(self.name) and bool(self.title)
+
+    def __repr__(self): return f'{DrawnLayer.__name__}(Name: {self.name}, Title: {self.title}, Time: {self.draw_time}, Calls: {self.draw_calls}, Drawn: {self.drawn})'
 
 
 class Layer(SelectableTool):
@@ -96,7 +106,7 @@ class Layer(SelectableTool):
         return self.__title
 
     def draw_time(self) -> DrawnLayer:
-        if self.inform():
+        if self.inform() and self.__title:
             start = timer()
 
             self.select()
@@ -119,6 +129,8 @@ class Layer(SelectableTool):
             total_time = end - start
 
             return DrawnLayer(self.__name, self.__title, total_time, draw_calls, drawn)
+        else:
+            return DrawnLayer('', '', 0, 0, False)
 
     @returnonexception(False, ElementNotInteractableException)
     def inform(self) -> bool:

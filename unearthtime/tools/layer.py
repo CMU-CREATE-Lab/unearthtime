@@ -96,7 +96,7 @@ class Layer(SelectableTool):
         return self.__title
 
     def draw_time(self) -> DrawnLayer:
-        if self._informed and self.__title:
+        if self.inform():
             start = timer()
 
             self.select()

@@ -46,17 +46,21 @@ class Library(metaclass=LocatorReference):
     ThemeMenu = Locator('div.themes-div')
     ThemeHeaders = Locator("div.themes-div > h3[data-enabled='true']", list_=True)
     ThemeTables = Locator("div.themes-div > table[data-enabled='true']", list_=True)
+    
     ThemeHeader = Locator([
         lambda id_: "h3#%s" % id_,
         lambda ac: "div.themes-div > h3[aria-controls='%s']" % prefix(ac, 'theme_')
     ])
+
     ThemeTable = Locator([
         lambda id_: "table#%s" % prefix(id_, 'theme_'),
         lambda alb: "div.themes-div > table[aria-labelledby='%s']" % alb
     ])
+
     ThemeStories = Locator([
         lambda id_: "table#%s  tr:not(:first-child)" % prefix(id_, 'theme_'),
         lambda aria_labelledby: "div.themes-div > table[aria-labelledby='%s']  tr:not(:first-child)" % aria_labelledby], list_=True)
+
     ThemeDescription = Locator(lambda id_: "table#%s #theme_description > td > p" % prefix(id_, 'theme_'))
 
     StoryInfo = Locator(lambda id_: "#%s > td" % prefix(id_, 'story_'), list_=True)

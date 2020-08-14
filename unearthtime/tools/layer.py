@@ -17,7 +17,7 @@ from .._algae.utils import raiseif
 from ..earthtime import EarthTime
 from ..explore.response import Hit, Miss, MissType
 
-DrawnLayer = namedtuple('DrawnLayer', ['title', 'draw_time', 'draw_calls', 'drawn'])
+DrawnLayer = namedtuple('DrawnLayer', ['name', 'title', 'draw_time', 'draw_calls', 'drawn'])
 
 
 class Layer(SelectableTool):
@@ -118,7 +118,7 @@ class Layer(SelectableTool):
 
             total_time = end - start
 
-            return DrawnLayer(self.__title, total_time, draw_calls, drawn)
+            return DrawnLayer(self.__name, self.__title, total_time, draw_calls, drawn)
 
     @returnonexception(False, ElementNotInteractableException)
     def inform(self) -> bool:

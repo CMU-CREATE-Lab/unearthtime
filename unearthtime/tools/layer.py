@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from time import sleep
 from timeit import default_timer as timer
-from typing import Union
+from typing import Union, Callable
 
 from selenium.common.exceptions import ElementNotInteractableException
 from selenium.common.exceptions import StaleElementReferenceException
@@ -418,7 +418,7 @@ class Category(SelectableTool):
             if header['aria-selected'] == 'false':
                 header.click()
 
-    def time_layers(self) -> list:
+    def time_layers(self, condition: Callable[[str], bool] = None) -> list:
         if self._informed and bool(self._earthtime):
             layer_times = []
 
@@ -442,7 +442,7 @@ class Category(SelectableTool):
                 header.click()
 
             for layer in self.__layers:
-                if time := layer.draw_time():
+                if condition and condition(layer.name) and (time := layer.draw_time()):
                     layer_times.append(time)
 
             if close_category:
@@ -480,13 +480,12 @@ class Category(SelectableTool):
 
             if labels := self._earthtime['CategoryLabels', self.__category_id]:
                 layers = [Layer(label.name, self.__category_id, self._earthtime) for label in labels]
-
-                for layer in layers:
-                    if time := layer.draw_time():
-                        self.__layers.append(layer)
-                        layer_times.append(time)
-
+                self.__layers = [layer for layer in layers if layer.inform()]
                 self.__layer_names = {self.__layers[i].name: i for i in range(len(self.__layers))}
+
+                for layer in self.__layers:
+                    if condition and condition(layer.name) and (time := layer.draw_time()):
+                        layer_times.append(time)
 
                 self._informed = len(layers) == len(self.__layers)
 

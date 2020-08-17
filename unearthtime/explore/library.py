@@ -106,8 +106,8 @@ class Library(metaclass=LocatorReference):
     CategoryMenu = Locator(["div.map-layer-div:%s" % DISPLAYED, 'div#featured-layers'])
 
     CategoryHeaders = Locator([
-        "div.map-layer-div:%s > h3:%s:not(:first-child)" % (DISPLAYED, DISPLAYED),
-        "div#featured-layers > h3:%s:not(:first-child)" % DISPLAYED],
+        "div.map-layer-div:%s > h3:%s:not([aria-controls='category-base-layers'])" % (DISPLAYED, DISPLAYED),
+        "div#featured-layers > h3:%s:not([aria-controls='category-base-layers'])" % DISPLAYED],
         list_=True)
 
     CategoryHeadersAfter = Locator([

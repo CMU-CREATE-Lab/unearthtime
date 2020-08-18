@@ -442,7 +442,10 @@ class Category(SelectableTool):
                 header.click()
 
             for layer in self.__layers:
-                if condition and condition(layer.name) and (time := layer.draw_time()):
+                if condition:
+                    if condition(layer.name) and (time := layer.draw_time()):
+                        layer_times.append(time)
+                elif time := layer.draw_time():
                     layer_times.append(time)
 
             if close_category:
@@ -484,7 +487,10 @@ class Category(SelectableTool):
                 self.__layer_names = {self.__layers[i].name: i for i in range(len(self.__layers))}
 
                 for layer in self.__layers:
-                    if condition and condition(layer.name) and (time := layer.draw_time()):
+                    if condition:
+                            if condition(layer.name) and (time := layer.draw_time()):
+                                layer_times.append(time)
+                    elif time := layer.draw_time():
                         layer_times.append(time)
 
                 self._informed = len(layers) == len(self.__layers)

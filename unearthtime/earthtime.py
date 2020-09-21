@@ -32,6 +32,7 @@ from .explore.image import DEFAULT_HEIGHT, DEFAULT_WIDTH
 from .explore.library import Library
 from .explore.locator import ForcedLocator
 from .explore.query import By, find as ufind, find_all as ufind_all, WaitType
+from .explore.registry import Registry
 from .explore.response import Hit, HitList, Miss
 from .timelapse import Timelapse
 
@@ -71,6 +72,7 @@ class EarthTime:
         self.__running = False
         self.__timelapse = None
         self.__history = []
+        self.__registry = Registry(Library.StandardLocators)
 
     def __bool__(self):
         return self.__running
@@ -79,7 +81,7 @@ class EarthTime:
         return self.__driver.execute_script(javascript, *args)
 
     def __contains__(self, key: str):
-        return True if key in Library else resolvequery(key) in Library
+        return True if key in self.__registry else resolvequery(key) in self.__registry
 
     def __enter__(self):
         if not self.__running:
@@ -95,7 +97,7 @@ class EarthTime:
         Given what `name` represents, the attribute returned will either be the result of a
         `Locator`, an attribute of the `WebDriver` or `Timelapse` for this instance.
         """
-        if name in Library or resolvequery(name) in Library:
+        if name in self.__registry or resolvequery(name) in self.__registry:
             return self.pull(name)
         elif hasattr(self.__driver, name):
             return self.__driver.__getattribute__(name)
@@ -136,6 +138,9 @@ class EarthTime:
     def is_running(self) -> bool:
         """Whether or not this page is actively running."""
         return self.__running
+
+    @property
+    def registry(self) -> Registry: return self.__registry
 
     @property
     def timelapse(self) -> Timelapse:
@@ -239,8 +244,8 @@ class EarthTime:
     def _(self, key: str, forced: bool = False):
         self.__history.append(key) if not forced else self.__history.append((key, True))
 
-        query = key if key in Library else (rkey if (rkey := resolvequery(key)) in Library else '')
-        locator = Library[query] if not forced else ForcedLocator.from_locator(Library[query])
+        query = key if key in self.__registry else (rkey if (rkey := resolvequery(key)) in self.__registry else '')
+        locator = self.__registry[query] if not forced else ForcedLocator.from_locator(self.__registry[query])
 
         return locator(self.__driver) if query else Miss
 
@@ -253,10 +258,10 @@ class EarthTime:
 
             self.__history.append(key) if not forced else self.__history.append(key + (True,))
 
-            query = name if name in Library else (rname if (rname := resolvequery(name)) in Library else '')
+            query = name if name in self.__registry else (rname if (rname := resolvequery(name)) in self.__registry else '')
 
             if query:
-                locator = Library[query] if not forced else ForcedLocator.from_locator(Library[query])
+                locator = self.__registry[query] if not forced else ForcedLocator.from_locator(self.__registry[query])
 
                 return locator(self.__driver, *key[1:]) if not callable(key[-1]) else locator(self.__driver, *key[1:-1], until=key[-1])
 

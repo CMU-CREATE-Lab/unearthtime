@@ -151,18 +151,7 @@ class Hit:
         self._element.parent.execute_script("arguments[0].style.display='%s'" % self.__display, self._element)
 
     def screenshot(self, mode: str = 'png'):
-        """Takes a screenshot of this element.
-
-        Raises:
-            - `UnearthtimeException` : Parent `WebDriver` isn't a chrome driver.
-
-        Notes:
-            - This is a Chrome specific capability
-        """
-        raiseif(
-            self._element.parent != 'chrome',
-            UnearthtimeException('Element screenshot only available for Chrome driver.')
-        )
+        """Takes a screenshot of this element."""
 
         if mode == 'png' or mode == 'PNG':
             return self._element.screenshot_as_png

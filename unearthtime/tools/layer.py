@@ -56,7 +56,7 @@ class Layer(SelectableTool):
             layer = Hit(layer)
 
         raiseif(
-            earthtime is None or bool(earthtime),
+            not bool(earthtime),
             UnearthtimeException('Invalid or inactive EarthTime page.')
         )
 
@@ -246,6 +246,11 @@ class Category(SelectableTool):
     def from_element(cls, header: Union[Element, Hit], earthtime: EarthTime):
         if isinstance(header, Element):
             header = Hit(header)
+
+        raiseif(
+            not bool(earthtime),
+            UnearthtimeException('Invalid or inactive EarthTime page.')
+        )
 
         raiseif(
             header is None or header.tag_name != 'H3' or

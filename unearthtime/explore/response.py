@@ -166,6 +166,14 @@ class Hit:
         elif mode == 'gray' or mode == 'grey':
             return cvtColor(array(Image.open(BytesIO(self._element.screenshot_as_png))), COLOR_BGR2GRAY)
 
+    def screenshot_and_save(self, path: str):
+        """Screenshots this element and saves it as a '.png'
+
+        Parameters:
+            - `path` : `str`
+        """
+        self.screenshot('img').save(path)
+
 
 class HitList(tuple):
     """A collection of successful responses from the DOM."""

@@ -116,13 +116,43 @@ class EarthTime:
 
         Parameters:
             - `driver` : `WebDriver`, `() -> Driver`
-            - `url` : `str
+            - `url` : `str`
             - `imp_wait` : `float`, `int` = 0
         """
         et = cls(driver, url)
         et.load(imp_wait)
 
         return et
+
+    @classmethod
+    def explore_from_hash(cls, driver: DriverType, hash_: str, root_url: str = _Explore, imp_wait: Union[float, int] = _ImplicitWait):
+        """Instantiates and loads an `EarthTime` page from a hash.
+
+        Parameters:
+            - `driver` : `WebDriver`, `() -> Driver`
+            - `hash_` : `str`
+
+        Notes:
+            - `hash_` should not have a '#' in front of it. The `url` will be rendered as `root_url#hash_to_layer_or_waypoint`
+        """
+        et = cls(driver, f'{root_url}#{hash_}')
+        et.load(imp_wait)
+
+        return et
+
+    @classmethod
+    def from_hash(cls, driver: DriverType, hash_: str, root_url: str = _Explore):
+        """Instantiates an `EarthTime` page from a hash.
+
+        Parameters:
+            - `driver` : `WebDriver`, `() -> Driver`
+            - `hash_` : `str`
+            - `root_url`: `str`
+
+        Notes:
+            - `hash_` should not have a '#' in front of it. The `url` will be rendered as `root_url#hash_to_layer_or_waypoint`
+        """
+        return cls(driver, f'{root_url}#{hash_}')
 
     @property
     def driver(self) -> DriverType:
@@ -403,6 +433,10 @@ class EarthTime:
             - `path` : `str`
         """
         self.__driver.get_screenshot_as_file(path)
+
+    def set_hash(self, hash_: str):
+        """Alters the url to include a hash."""
+        self(f"window.location.hash = '{hash_}'")
 
     @staticmethod
     def __reset_driver():

@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 from collections import ChainMap
+from typing import Dict, Iterable, Tuple, Union
 
 from .locator import Locator
-
-from typing import Dict, Iterable, Tuple, Union
 
 LocatorReference = Union[Dict[str, Locator], Iterable[Tuple[str, Locator]]]
 
@@ -56,7 +55,6 @@ class Registry:
 
         if not maps:
             self.__dictionary.maps.append({})
-
 
     def delete(self, key: str):
         for map_ in self.__dictionary.maps:

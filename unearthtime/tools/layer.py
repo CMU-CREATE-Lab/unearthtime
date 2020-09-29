@@ -17,6 +17,7 @@ from .._algae.utils import raiseif
 from ..earthtime import EarthTime
 from ..explore.response import Hit, Miss, MissType
 
+
 @dataclass
 class DrawnLayer:
     name: str
@@ -493,8 +494,8 @@ class Category(SelectableTool):
 
                 for layer in self.__layers:
                     if condition:
-                            if condition(layer.name) and (time := layer.draw_time()):
-                                layer_times.append(time)
+                        if condition(layer.name) and (time := layer.draw_time()):
+                            layer_times.append(time)
                     elif time := layer.draw_time():
                         layer_times.append(time)
 

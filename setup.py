@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name='unearthtime',
-    version='0.1.4-alpha',
+    version='0.1.5-alpha',
     packages=setuptools.find_packages(),
     url='https://github.com/CMU-CREATE-Lab/unearthtime',
     author='hjhawkinsiv',
@@ -10,6 +10,7 @@ setuptools.setup(
     description='EarthTime Automation Framework',
     data_files=[('', ['LICENSE'])],
     install_requires=[
+        'imutils',
         'opencv-python',
         'Pillow',
         'scikit-image',

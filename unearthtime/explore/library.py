@@ -73,17 +73,17 @@ class Library:
         'DataLibrarySearchFoundLabels': Locator(f"#layer-search-results > label:{NOT_DISPLAYED_CSS}", list_=True),
 
         'DataLibrarySearchFoundLabelsBetween': Locator(lambda after, before: f'//*[@id="layer-search-results"]/label[preceding-sibling::div[text()="{after}"] and '
-                                                                          f'following-sibling::div[text()="{before}"] and {NOT_DISPLAYED_XPATH}]',
-                                                    By.XPATH,
-                                                    list_=True),
+                                                                             f'following-sibling::div[text()="{before}"] and {NOT_DISPLAYED_XPATH}]',
+                                                       By.XPATH,
+                                                       list_=True),
 
         'DataLibrarySearchFoundLabelsAfter': Locator(lambda after: f'//*[@id="layer-search-results"]/label[preceding-sibling::div[text()="{after}"] and {NOT_DISPLAYED_XPATH}]',
-                                                  By.XPATH,
-                                                  list_=True),
+                                                     By.XPATH,
+                                                     list_=True),
 
         'DataLibrarySearchFoundLabelsBefore': Locator(lambda before: f'//*[@id="layer-search-results"]/label[following-sibling::div[text()="{before}"] and {NOT_DISPLAYED_XPATH}]',
-                                                   By.XPATH,
-                                                   list_=True),
+                                                      By.XPATH,
+                                                      list_=True),
 
         'BaseLayersHeader': Locator('category-base-layers', By.ID),
         'BaseLayerRows': Locator('#category-base-layers > tbody > tr', By.ID),

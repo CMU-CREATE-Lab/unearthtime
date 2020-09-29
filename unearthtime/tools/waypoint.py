@@ -7,7 +7,7 @@ from .tool import SelectableTool
 from .._algae.deco import returnonexception
 from .._algae.utils import until
 from ..earthtime import EarthTime
-from ..explore.image import Thumbnail, Dimension
+from ..imaging.image import Thumbnail, Dimension
 
 
 class Waypoint(SelectableTool):

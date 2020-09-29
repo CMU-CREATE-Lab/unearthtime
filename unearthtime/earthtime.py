@@ -13,27 +13,29 @@ Attributes:
 
 from __future__ import annotations
 
+import time
 from functools import lru_cache, singledispatchmethod as overloaded
 from io import BytesIO
-from time import sleep
+from queue import Queue
 from typing import Callable, Final, Iterable, Union
 
 from PIL import Image
 from cv2 import cvtColor, COLOR_BGR2RGB, COLOR_BGR2GRAY
 from numpy import array
+from selenium.common.exceptions import InvalidSessionIdException
 from selenium.webdriver.remote.webdriver import WebDriver as Driver
 from selenium.webdriver.remote.webdriver import WebElement as Element
 
 from ._algae.exceptions import UnearthtimeException
 from ._algae.strings import ismalformedurl, resolvequery
 from ._algae.utils import isnullary, istrue, raiseif
-from .explore.image import AspectRatio, Thumbnail
-from .explore.image import DEFAULT_HEIGHT, DEFAULT_WIDTH
 from .explore.library import Library
 from .explore.locator import ForcedLocator
 from .explore.query import By, find as ufind, find_all as ufind_all, WaitType
 from .explore.registry import Registry
 from .explore.response import Hit, HitList, Miss
+from .imaging.image import AspectRatio, Thumbnail
+from .imaging.image import DEFAULT_HEIGHT, DEFAULT_WIDTH
 from .timelapse import Timelapse
 
 DriverType = Union[Driver, Callable[[], Driver]]
@@ -170,7 +172,8 @@ class EarthTime:
         return self.__running
 
     @property
-    def registry(self) -> Registry: return self.__registry
+    def registry(self) -> Registry:
+        return self.__registry
 
     @property
     def timelapse(self) -> Timelapse:
@@ -252,7 +255,7 @@ class EarthTime:
         )
 
         self.__driver.get(url)
-        sleep(2.5)
+        time.sleep(2.5)
 
     @overloaded
     def pull(self, key: Union[str, tuple], forced: bool = False):
@@ -316,7 +319,7 @@ class EarthTime:
             self.__driver._EarthTimePage = self
             self.__driver.get(self.__url)
 
-            sleep(5)
+            time.sleep(5)
 
             self.__driver.maximize_window()
 
@@ -326,6 +329,20 @@ class EarthTime:
             self.__timelapse = Timelapse(self.__driver)
             self.__running = True
             self.__total_pages += 1
+
+    def new_session(self, url: str = _Explore):
+
+        raiseif(
+            ismalformedurl(url) or not ('earthtime.org/' in url and ('explore' in url or 'stories/' in url)),
+            UnearthtimeException(':[%s]: Url is not an EarthTime page.' % url)
+        )
+
+        self.__driver.start_session({})
+        self.__driver.get(url)
+
+        time.sleep(5)
+
+        self.__driver.maximize_window()
 
     def pause_at_end(self):
         """Pauses the timeline and sets it to the end."""
@@ -468,3 +485,137 @@ class CachedEarthTime(EarthTime):
 
     @lru_cache
     def __getitem__(self, key: Union[str, tuple]): return self.pull(key)
+
+
+class EarthTimePool:
+    __instance = None
+
+    def __new__(cls, driver: Callable[[], Driver], size: int = 5):
+        if EarthTimePool.__instance is None:
+            EarthTimePool.__instance = object.__new__(cls)
+
+        return EarthTimePool.__instance
+
+    def __init__(self, driver: Callable[[], Driver], size: int = -1):
+        self.__available_count = 0
+        self.__available = Queue(size) if size > 0 else Queue()
+        self.__driver = driver
+        self.__occupied = {}
+        self.__size = size
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.quit()
+
+    @property
+    def available_instances(self): return self.__available_count
+
+    @property
+    def occupied_instances(self): return len(self.__occupied)
+
+    @property
+    def size(self): return self.__size
+
+    def acquire(self, url: str = _Explore, imp_wait: Union[float, int] = _ImplicitWait, block: bool = True, timeout: float = None):
+        if self.__available_count > 0:
+            et = self.__available.get_nowait()
+
+            if bool(et):
+                try:
+                    _ = et.window_handles
+                except InvalidSessionIdException:
+                    pass
+                else:
+                    self.__occupied[et.session_id] = et
+                    self.__available_count -= 1
+                    return self.acquire(url, imp_wait, block, timeout)
+            else:
+                return self.acquire(url, imp_wait, block, timeout)
+
+            et.driver.start_session({})
+            et.driver.get(url)
+
+            time.sleep(5)
+
+            et.driver.maximize_window()
+
+            if imp_wait > 0:
+                et.driver.implicitly_wait(imp_wait)
+
+            self.__available_count -= 1
+
+        elif self.__size > 0:
+
+            if len(self.__occupied) < self.__size:
+                et = EarthTime.explore(self.__driver, url, imp_wait)
+            else:
+                et = self.__available.get(block, timeout)
+
+                et.driver.start_session({})
+                et.driver.get(url)
+
+                time.sleep(5)
+
+                et.driver.maximize_window()
+
+                if imp_wait > 0:
+                    et.driver.implicitly_wait(imp_wait)
+
+                self.__available_count -= 1
+        else:
+            et = EarthTime.explore(self.__driver, url, imp_wait)
+
+        self.__occupied[et.session_id] = et
+
+        return et
+
+    def clean_up(self):
+        to_delete = []
+
+        for session_id, et in self.__occupied.items():
+            if bool(et):
+                try:
+                    _ = et.window_handles
+                except InvalidSessionIdException:
+                    self.__available.put_nowait(et)
+                    self.__available_count += 1
+
+                    to_delete.append(session_id)
+            else:
+                to_delete.append(session_id)
+
+        for session_id in to_delete:
+            del self.__occupied[session_id]
+
+    def quit(self):
+        self.clean_up()
+
+        for et in self.__occupied.values():
+            et.quit()
+
+        self.__occupied.clear()
+
+        while not self.__available.empty():
+            et = self.__available.get_nowait()
+
+            if bool(et):
+                et.quit()
+
+    def release(self, session_id: str):
+        raiseif(
+            session_id not in self.__occupied,
+            UnearthtimeException(f':[{session_id}]: EarthTime instance does not belong to pool.')
+        )
+
+        et = self.__occupied[session_id]
+
+        if bool(et):
+            et.close()
+            self.__available.put_nowait(et)
+
+
+
+
+

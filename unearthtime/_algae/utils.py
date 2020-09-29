@@ -39,13 +39,14 @@ def k_arityof(method): return len([param for param in sig(method).parameters.val
     Parameter.POSITIONAL_OR_KEYWORD)]) if callable(method) else -1
 
 
-def newlambda(name, argcount):
-    return "f = lambda driver, %s: driver.execute_script('return timelapse.%s(%s)')" % (
-        ', '.join(chr(i + 97) for i in range(argcount)),
-        name,
-        ', '.join(chr(i + 97) for i in range(argcount))) if argcount > 0 else "f = lambda driver: " \
-                                                                              "driver.execute_script('return " \
-                                                                              "timelapse.%s()')" % name
+def newlambda(cls, name, argcount):
+    if argcount > 0:
+        args = ', '.join(chr(i + 97) for i in range(argcount))
+        lamb = f"f = lambda driver, {args}: driver.execute_script(f'return {cls}.{name}({', '.join([f'{{{arg}}}' for arg in args.split(', ')])})')"
+    else:
+        lamb = f"f = lambda driver: driver.execute_script('return {cls}.{name}()')"
+
+    return lamb
 
 
 def p_arityof(method): return len([param for param in sig(method).parameters.values() if param.kind in (

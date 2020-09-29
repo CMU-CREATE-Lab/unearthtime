@@ -10,7 +10,7 @@ from .._algae.exceptions import UnearthtimeException
 from .._algae.strings import prefix
 from .._algae.utils import raiseif
 from ..earthtime import EarthTime
-from ..explore.image import Dimension, Thumbnail
+from ..imaging.image import Dimension, Thumbnail
 from ..explore.response import Hit, Miss, MissType
 
 

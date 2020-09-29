@@ -13,9 +13,6 @@ from selenium.common.exceptions import ElementClickInterceptedException
 from selenium.common.exceptions import ElementNotInteractableException
 from selenium.webdriver.remote.webelement import WebElement as Element
 
-from .._algae.exceptions import UnearthtimeException
-from .._algae.utils import raiseif
-
 
 class MissType(type):
     """Metaclass representing a failed response from the DOM."""

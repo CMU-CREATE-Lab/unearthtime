@@ -33,14 +33,14 @@ from selenium.webdriver.remote.webdriver import WebDriver as Driver
 from selenium.webdriver.remote.webelement import WebElement as Element
 from selenium.webdriver.support.ui import WebDriverWait
 
-from .response import Hit, HitList, Miss
+from .response import Hit, HitList, Miss, MissType
 from .._algae.deco import returnonexception
 from .._algae.exceptions import UnearthtimeException
 
 __all__ = ['By', 'fclass', 'fcss', 'fid', 'find', 'find_all', 'fname', 'ftag', 'fxpath',
            'fxclass', 'fxcss', 'fxid', 'fxname', 'fxtag', 'fxxpath', 'response_of', 'wait_for']
 
-ResponseType = Union[Hit, HitList, Miss]
+ResponseType = Union[Hit, HitList, MissType]
 WaitType = Callable[[Driver], Union[Hit, HitList, Literal[False]]]
 WebObject = Union[Driver, Element]
 

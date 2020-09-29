@@ -24,13 +24,13 @@ class Timelapse:
         self.__driver = driver
 
     def __getattr__(self, name: str):
-        res = self.__driver.execute_script('return timelapse.%s' % name)
+        res = self.__driver.execute_script(f'return timelapse.{name}')
 
-        if isinstance(res, dict) and len(res) == 0 and self.__driver.execute_script('return typeof(timelapse.%s)' % name) == 'function':
-            length = self.__driver.execute_script('return timelapse.%s.length' % name)
+        if isinstance(res, dict) and len(res) == 0 and self.__driver.execute_script(f'return typeof(timelapse.{name})') == 'function':
+            length = self.__driver.execute_script(f'return timelapse.{name}.length')
             func = {}
 
-            exec(newlambda(name, length), func)
+            exec(newlambda('timelapse', name, length), func)
 
             return partial(func['f'], self.__driver)
         else:

@@ -1,17 +1,14 @@
 """The response module defines objects representing the various responses from querying the DOM."""
-
 from __future__ import annotations
 
-from io import BytesIO
 from time import sleep
-from typing import Iterable, Union
+from typing import Iterable, Union, Tuple
 
-from PIL import Image
-from cv2 import cvtColor, COLOR_BGR2RGB, COLOR_BGR2GRAY
-from numpy import array
 from selenium.common.exceptions import ElementClickInterceptedException
 from selenium.common.exceptions import ElementNotInteractableException
 from selenium.webdriver.remote.webelement import WebElement as Element
+
+from ..imaging.image import Image
 
 
 class MissType(type):
@@ -44,13 +41,13 @@ class Hit:
         """Exposes `HTML` and `javascript` attributes, allowing access via dot-notation.
 
         Parameters:
-            - `attr` : `str`
+            - `attr`: `str`
 
         Returns:
             - `str`
 
         Raises:
-            - `AttributeError` : Invalid `attr`.
+            - `AttributeError`: Invalid `attr`.
 
         Notes:
             - `id` and `class` are special cases and these tag attributes can be accessed
@@ -87,6 +84,11 @@ class Hit:
     def driver_session_id(self):
         """The session if of the Selenium driver for this element."""
         return self._element.parent.session_id
+
+    @property
+    def is_visible(self):
+        """Whether this element is visible on the UI."""
+        return self._element.parent.execute_script('return arguments[0].is(":visible")', self._element)
 
     @property
     def selenium_id(self):
@@ -155,24 +157,25 @@ class Hit:
         elif mode == 'base64':
             return self._element.screenshot_as_base64
         elif mode == 'img' or mode == 'image':
-            return Image.open(BytesIO(self._element.screenshot_as_png))
+            return Image.from_bytes(self._element.screenshot_as_png)
         elif mode == 'array' or mode == 'ndarray':
-            return array((Image.open(BytesIO(self._element.screenshot_as_png))))
-        elif mode == 'rgb' or mode == 'RGB':
-            return cvtColor(array(Image.open(BytesIO(self._element.screenshot_as_png))), COLOR_BGR2RGB)
-        elif mode == 'gray' or mode == 'grey':
-            return cvtColor(array(Image.open(BytesIO(self._element.screenshot_as_png))), COLOR_BGR2GRAY)
+            return Image.from_bytes(self._element.screenshot_as_png).array
+        else:
+            return Image.from_bytes(self._element.screenshot_as_png, mode)
 
-    def screenshot_and_save(self, path: str):
+    def screenshot_and_save(self, fp: str = './', color_space: str = 'BGR', format_=None, **params):
         """Screenshots this element and saves it as a '.png'
 
         Parameters:
-            - `path` : `str`
+            - `fp`: `str` = './'
+            - `color_space`: str = 'BGR'
+            - `format` = None
+            - `**params`
         """
-        self.screenshot('img').save(path)
+        self.screenshot(color_space).save(fp, format_, **params)
 
 
-class HitList(tuple):
+class HitList(Tuple[Hit]):
     """A collection of successful responses from the DOM."""
 
     def __new__(cls, hits: Iterable[Union[Element, Hit]] = None):

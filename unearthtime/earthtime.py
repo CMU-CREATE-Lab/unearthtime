@@ -5,9 +5,9 @@ way of controlling a page, i.e. `EarthTime` and the other which caches
 queries pulled using bracket-notation, `CachedEarthTime`.
 
 Attributes:
-    - `DriverType` : `Driver`, `() -> Driver`
+    - `DriverType`: `Driver`, `() -> Driver`
     - `ElementPredicate : `(Element) -> bool, ([Element,]) -> bool, (Hit) -> bool, (HitList) -> bool
-    - `_Explore` : `str` = 'https://earthtime.org/explore'
+    - `_Explore`: `str` = 'https://earthtime.org/explore'
     - `_ImplicitWait : `int` = 0
 """
 
@@ -15,13 +15,9 @@ from __future__ import annotations
 
 import time
 from functools import lru_cache, singledispatchmethod as overloaded
-from io import BytesIO
 from queue import Queue
 from typing import Callable, Final, Iterable, Union
 
-from PIL import Image
-from cv2 import cvtColor, COLOR_BGR2RGB, COLOR_BGR2GRAY
-from numpy import array
 from selenium.common.exceptions import InvalidSessionIdException
 from selenium.webdriver.remote.webdriver import WebDriver as Driver
 from selenium.webdriver.remote.webdriver import WebElement as Element
@@ -34,8 +30,8 @@ from .explore.locator import ForcedLocator
 from .explore.query import By, find as ufind, find_all as ufind_all, WaitType
 from .explore.registry import Registry
 from .explore.response import Hit, HitList, Miss
-from .imaging.image import AspectRatio, Thumbnail
 from .imaging.image import DEFAULT_HEIGHT, DEFAULT_WIDTH
+from .imaging.image import Image, AspectRatio, Thumbnail
 from .timelapse import Timelapse
 
 DriverType = Union[Driver, Callable[[], Driver]]
@@ -53,11 +49,11 @@ class EarthTime:
     def __init__(self, driver: DriverType, url: str = _Explore):
         """
         Parameters:
-            - `driver` : `WebDriver`, `() -> Driver`
-            - `url` : `str
+            - `driver`: `WebDriver`, `() -> Driver`
+            - `url`: `str
 
         Raises:
-            - `UnearthtimeException` :
+            - `UnearthtimeException`:
                 - `url` is not of the form 'https://earthtime.org/explore' or 'https://earthtime.org/stories/story_name'.
                 - `driver` is already connected to an `EarthTime` object.
                 - `driver` is not a nullary callable.
@@ -117,9 +113,9 @@ class EarthTime:
         """Instantiates and loads an `EarthTime` page.
 
         Parameters:
-            - `driver` : `WebDriver`, `() -> Driver`
-            - `url` : `str`
-            - `imp_wait` : `float`, `int` = 0
+            - `driver`: `WebDriver`, `() -> Driver`
+            - `url`: `str`
+            - `imp_wait`: `float`, `int` = 0
         """
         et = cls(driver, url)
         et.load(imp_wait)
@@ -131,8 +127,8 @@ class EarthTime:
         """Instantiates and loads an `EarthTime` page from a hash.
 
         Parameters:
-            - `driver` : `WebDriver`, `() -> Driver`
-            - `hash_` : `str`
+            - `driver`: `WebDriver`, `() -> Driver`
+            - `hash_`: `str`
 
         Notes:
             - `hash_` should not have a '#' in front of it. The `url` will be rendered as `root_url#hash_to_layer_or_waypoint`
@@ -147,8 +143,8 @@ class EarthTime:
         """Instantiates an `EarthTime` page from a hash.
 
         Parameters:
-            - `driver` : `WebDriver`, `() -> Driver`
-            - `hash_` : `str`
+            - `driver`: `WebDriver`, `() -> Driver`
+            - `hash_`: `str`
             - `root_url`: `str`
 
         Notes:
@@ -184,7 +180,7 @@ class EarthTime:
         """Executes a string a javascript
 
         Parameters:
-            - `javascript` : `str`
+            - `javascript`: `str`
             - `*args`
         """
         return self.__driver.execute_script(javascript, *args)
@@ -193,16 +189,16 @@ class EarthTime:
         """General finder method for a single element.
 
         Parameters:
-            - `query` : `str`
-            - `by` : `By`
-            - `parent` : `WebDriver`, `WebElement`
-            - `until` : `(WebDriver)` -> `Hit`, `HitList`, `False` = `None`
+            - `query`: `str`
+            - `by`: `By`
+            - `parent`: `WebDriver`, `WebElement`
+            - `until`: `(WebDriver)` -> `Hit`, `HitList`, `False` = `None`
 
         Returns:
             - `Hit`, `HitList`, `Miss`
 
         Raises:
-            - `UnearthtimeException` : Invalid `by` enum.
+            - `UnearthtimeException`: Invalid `by` enum.
         """
 
         return ufind(query, by, self.__driver, until)
@@ -211,10 +207,10 @@ class EarthTime:
         """General finder method for a list of elements.
 
         Parameters:
-            - `query` : `str`
-            - `by` : `By`
-            - `parent` : `WebDriver`, `WebElement`
-            - `until` : `(WebDriver)` -> `Hit`, `HitList`, `False` = `None`
+            - `query`: `str`
+            - `by`: `By`
+            - `parent`: `WebDriver`, `WebElement`
+            - `until`: `(WebDriver)` -> `Hit`, `HitList`, `False` = `None`
 
         Returns:
             - `Hit`, `HitList`, `Miss`
@@ -226,8 +222,8 @@ class EarthTime:
         """Gets a thumbnail of the current view of the page.
 
         Parameters:
-            - `width` : `int` = 640
-            - `height` : `int` = 360
+            - `width`: `int` = 640
+            - `height`: `int` = 360
 
         Returns:
             - `Thumbnail`
@@ -243,10 +239,10 @@ class EarthTime:
         """Navigates driver to an EarthTime page.
 
         Parameters:
-            - `url` : `str`
+            - `url`: `str`
 
         Raises:
-            - `UnearthtimeException` : `url` is not of the form 'https://earthtime.org/explore' or 'https://earthtime.org/stories/story_name'.
+            - `UnearthtimeException`: `url` is not of the form 'https://earthtime.org/explore' or 'https://earthtime.org/stories/story_name'.
         """
 
         raiseif(
@@ -257,13 +253,21 @@ class EarthTime:
         self.__driver.get(url)
         time.sleep(2.5)
 
+    def hide_extras(self):
+        """Hides the container with extras content if it is visible."""
+        if (cnt := self.ExtrasContentContainer) and cnt.is_visible:
+            if btn := self.ExtrasContentContainerButton:
+                btn.click()
+            else:
+                self('arguments[0].hide()', cnt._element)
+
     @overloaded
     def pull(self, key: Union[str, tuple], forced: bool = False):
         """Attempts to retrieve an element or elements using the provided `Locator` name and arguments.
 
         Parameters:
-            - `key` : `str`, `tuple`
-            - `forced` : `bool` = `False`
+            - `key`: `str`, `tuple`
+            - `forced`: `bool` = `False`
 
         Notes:
 
@@ -302,10 +306,10 @@ class EarthTime:
         """Instantiates the `WebDriver` of this instance and loads the page of the given `url`.
 
         Parameters:
-            - `imp_wait` : `float`, `int` = 0
+            - `imp_wait`: `float`, `int` = 0
 
         Raises:
-            - `UnearthtimeException` : The `WebDriver` for this instance is already connected to an `EarthTime` object.
+            - `UnearthtimeException`: The `WebDriver` for this instance is already connected to an `EarthTime` object.
         """
         if not self.__running:
             if callable(self.__driver):
@@ -319,7 +323,7 @@ class EarthTime:
             self.__driver._EarthTimePage = self
             self.__driver.get(self.__url)
 
-            time.sleep(5)
+            time.sleep(2)
 
             self.__driver.maximize_window()
 
@@ -330,7 +334,27 @@ class EarthTime:
             self.__running = True
             self.__total_pages += 1
 
+    def map_loaded(self, wait: Union[float, int] = 0) -> bool:
+        """Whether or not the last frame has been completely drawn for a layer.
+
+        Parameters:
+            * `wait`: float, int = 0
+        """
+        if wait > 0:
+            c = time.time()
+
+            while (((time.time() - c) < wait) or self.isSpinnerShowing()) and not self.lastFrameCompletelyDrawn:
+                c = time.time()
+                pass
+
+        return self.lastFrameCompletelyDrawn
+
     def new_session(self, url: str = _Explore):
+        """Starts a new driver session, a page loaded with the given url.
+
+        Parameters:
+            * `url`: str = 'https://earthtime.org/explore'
+        """
 
         raiseif(
             ismalformedurl(url) or not ('earthtime.org/' in url and ('explore' in url or 'stories/' in url)),
@@ -340,17 +364,46 @@ class EarthTime:
         self.__driver.start_session({})
         self.__driver.get(url)
 
-        time.sleep(5)
+        time.sleep(2)
 
         self.__driver.maximize_window()
 
     def pause_at_end(self):
         """Pauses the timeline and sets it to the end."""
-        self.__driver.execute_script('timelapse.pause(); timelapse.seek(%d)' % len(self.getCaptureTimes() - 1))
+        if self.TimelineControl:
+            if (btn := self.TimelinePlayPauseButton)['title'] == 'Pause':
+                btn.click()
+
+            if not self.isPaused():
+                self.__driver.execute_script('timelapse.pause();')
+
+            self.__driver.execute_script(f'timelapse.seek({len(self.getCaptureTimes() - 1)})')
+
+    def pause_at_middle(self):
+        """Pauses the timeline and setis it to the middle.
+
+        Notes:
+            * The middle is defined by half the length of the total capture times rounded down.
+        """
+        if self.TimelineControl:
+            if (btn := self.TimelinePlayPauseButton)['title'] == 'Pause':
+                btn.click()
+
+            if not self.isPaused():
+                self.__driver.execute_script('timelapse.pause();')
+
+            self.__driver.execute_script(f'timelapse.seek({len(self.getCaptureTimes()) // 2}')
 
     def pause_at_start(self):
         """Pauses the timeline and sets it to the beginning."""
-        self.__driver.execute_script('timelapse.pause(); timelapse.seek(0)')
+        if self.TimelineControl:
+            if (btn := self.TimelinePlayPauseButton)['title'] == 'Pause':
+                btn.click()
+
+            if not self.isPaused():
+                self.__driver.execute_script('timelapse.pause();')
+
+            self.__driver.execute_script('timelapse.seek(0)')
 
     def quit(self):
         """Closes the page and quits the `WebDriver` of this instance."""
@@ -382,7 +435,7 @@ class EarthTime:
         """Retries the query at a given index of the history.
 
         Parameters:
-            `index` : int = -1
+            `index`: int = -1
 
         Returns:
             - `Hit`, `HitList`, `Miss`
@@ -393,9 +446,9 @@ class EarthTime:
         """Attempts to retrieve an element based on a given `Locator` name, retrying if it fails the `condition`.
 
         Parameters:
-            - `key` : `str`, `tuple`
-            - `condition` : `bool`, `(Element)` -> `bool`, `([Element,])` -> `bool`, `(Hit)` -> `bool`, `(HitList)` -> `bool`
-            - `actions` : `()` -> `None` = `None`
+            - `key`: `str`, `tuple`
+            - `condition`: `bool`, `(Element)` -> `bool`, `([Element,])` -> `bool`, `(Hit)` -> `bool`, `(HitList)` -> `bool`
+            - `actions`: `()` -> `None` = `None`
 
         Returns:
             - `Hit`, `HitList`, `Miss`
@@ -416,18 +469,14 @@ class EarthTime:
         """Screenshots the window
 
         Parameters:
-            - `mode` : `str` = 'png'
+            - `mode`: `str` = 'png'
 
         Notes:
             - Valid modes are:
                 - png, PNG
                 - base64
                 - img, IMG, image
-                - array, ndarray
-                - rgb, RGB
-                - gray, grey
-
-            - If 'png'/'PNG' is used the screenshot will colored using a BGR model. Use 'rgb'/'RGB' mode if this not desired.
+                - color space
         """
 
         if mode in ('png', 'PNG'):
@@ -435,25 +484,53 @@ class EarthTime:
         elif mode == 'base64':
             return self.__driver.get_screenshot_as_base64()
         elif mode in ('img', 'IMG', 'image'):
-            return Image.open(BytesIO(self.__driver.get_screenshot_as_png()))
+            return Image.from_bytes(self.__driver.get_screenshot_as_png())
         elif mode in ('array', 'ndarray'):
-            return array(Image.open(BytesIO(self.__driver.get_screenshot_as_png())))
-        elif mode in ('rgb', 'RGB'):
-            return cvtColor(array(Image.open(BytesIO(self.__driver.get_screenshot_as_png()))), COLOR_BGR2RGB)
-        elif mode in ('gray', 'grey'):
-            return cvtColor(array(Image.open(BytesIO(self.__driver.get_screenshot_as_png()))), COLOR_BGR2GRAY)
-
-    def screenshot_and_save(self, path: str):
+            return Image.from_bytes(self.__driver.get_screenshot_as_png()).array()
+        else:
+            return Image.from_bytes(self.__driver.get_screenshot_as_png(), mode)
+        
+    def screenshot_and_save(self, fp: str = './', color_space: str = 'BGR', format_=None, **params):
         """Screenshots the window and saves it as a '.png'
 
         Parameters:
-            - `path` : `str`
+            - `fp`: `str` = './'
+            - `color_space`: str = 'BGR'
+            - `format` = None
+            - `**params`
         """
-        self.__driver.get_screenshot_as_file(path)
+        self.screenshot(color_space).save(fp, format_, **params)
 
-    def set_hash(self, hash_: str):
+    def screenshot_content(self, mode: str = 'png'):
+        """Screenshots the data panes
+
+        Parameters:
+            - `mode`: `str` = 'png'
+
+        Notes:
+            - Valid modes are:
+                - png, PNG
+                - base64
+                - img, IMG, image
+                - color space
+        """
+        return self.DataPanes.screenshot(mode)
+    
+    def screenshot_content_and_save(self, fp: str = './', color_space: str = 'BGR', format_=None, **params):
+        """Screenshots the data panes and saves it.
+
+        Parameters:
+            - `fp`: `str` = './'
+            - `color_space`
+            - `format`
+            - `**params`
+        """
+        self.DataPanes.screenshot_and_save(fp, color_space, format_, **params)
+
+    def set_hash(self, hash_: str, wait: int = 0):
         """Alters the url to include a hash."""
         self(f"window.location.hash = '{hash_}'")
+        return self.map_loaded(wait)
 
     @staticmethod
     def __reset_driver():
@@ -510,13 +587,16 @@ class EarthTimePool:
         self.quit()
 
     @property
-    def available_instances(self): return self.__available_count
+    def available_instances(self):
+        return self.__available_count
 
     @property
-    def occupied_instances(self): return len(self.__occupied)
+    def occupied_instances(self):
+        return len(self.__occupied)
 
     @property
-    def size(self): return self.__size
+    def size(self):
+        return self.__size
 
     def acquire(self, url: str = _Explore, imp_wait: Union[float, int] = _ImplicitWait, block: bool = True, timeout: float = None):
         if self.__available_count > 0:
@@ -537,7 +617,7 @@ class EarthTimePool:
             et.driver.start_session({})
             et.driver.get(url)
 
-            time.sleep(5)
+            time.sleep(2)
 
             et.driver.maximize_window()
 
@@ -614,8 +694,3 @@ class EarthTimePool:
         if bool(et):
             et.close()
             self.__available.put_nowait(et)
-
-
-
-
-

@@ -465,8 +465,11 @@ class Image:
     def copy(self):
         return self.__copy__()
 
-    def draw_rectangle(self, pt1, pt2, color: RGBColor =(0, 0, 255), line_thickness: int = 1, line_type: int =cv.LINE_8):
+    def draw_rectangle(self, pt1, pt2, color: RGBColor = (0, 0, 255), line_thickness: int = 1, line_type: int = cv.LINE_8):
         cv.rectangle(self.__image, pt1, pt2, color, line_thickness, line_type)
+
+    def save(self, fp: str = './', format_=None, **params):
+        self.as_image().save(fp, format_, **params)
 
     def show(self, name: str):
         cv.imshow(name, self.__image)

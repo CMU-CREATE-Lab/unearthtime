@@ -22,6 +22,8 @@ class Library:
         'ShareButton': Locator('share-menu-choice', By.ID),
         'StoryEditorButton': Locator('story-editor-menu-choice', By.ID),
         'DataPanes': Locator('timeMachine_timelapse_dataPanes', By.ID),
+        'ExtrasContentContainer': Locator('[aria-describedby="extras-content-container"]'),
+        'ExtrasContentContainerCloseButton': Locator('[aria-describedby="extras-content-container"] button[title="Close"]'),
 
         'LocationSearchContainer': Locator('div.location_search_div', By.ID),
         'LocationSearchIcon': Locator('location_search_icon', By.ID),

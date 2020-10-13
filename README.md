@@ -13,13 +13,13 @@ pip install unearthtime-0.1.0a0-py3-none-any.whl
 Install from git
 
 ```
-pip install git+https://github.com/CMU-CREATE-Lab/unearthtime.git#egg=unearthtime
+pip install --upgrade git+https://github.com/CMU-CREATE-Lab/unearthtime.git#egg=unearthtime
 ```
 
 Install from git using specific tag version.
 
 ```
-pip install git+https://github.com/CMU-CREATE-Lab/unearthtime.git@v0.1.0-alpha#egg=unearthtime
+pip install git+https://github.com/CMU-CREATE-Lab/unearthtime.git@v0.1.6-alpha#egg=unearthtime
 ```
  
 ## Examples

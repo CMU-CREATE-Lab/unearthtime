@@ -256,7 +256,7 @@ class Library:
             f"div.controls:{NOT_DISPLAYED_CSS}"
         ]),
 
-        'TimelinePlayPauseButton': Locator(['button.customPlay', 'button.playbackButton']),
+        'TimelinePlayPauseButton': Locator(['button.customPlay', 'div.playbackButton']),
         'TimelineCurrentCaptureTime': Locator(['div.timeText', 'div.captureTimeMain']),
         'TimelinePlaySpeedButtons': Locator([
             'button.customToggleSpeed',
@@ -276,7 +276,7 @@ class Library:
         'CustomTimelineTicks': Locator('div.timeTickContainer', list_=True),
 
         'DefaultTimelineControl': Locator(f"div.controls:{NOT_DISPLAYED_CSS}"),
-        'DefaultPlayPauseButton': Locator('button.playbackButton'),
+        'DefaultPlayPauseButton': Locator('div.playbackButton'),
         'DefaultCurrentCaptureTime': Locator('div.captureTimeMain'),
         'DefaultPlaySpeedButtons': Locator('button.toggleSpeed', list_=True),
         'DefaultPlaySpeedButtonsText': Locator('button.toggleSpeed > span', list_=True),

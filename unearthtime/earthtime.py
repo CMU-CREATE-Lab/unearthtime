@@ -377,7 +377,7 @@ class EarthTime:
             if not self.isPaused():
                 self.__driver.execute_script('timelapse.pause();')
 
-            self.__driver.execute_script(f'timelapse.seek({len(self.getCaptureTimes()) - 1});')
+            self.__driver.execute_script(f'timelapse.seekToFrame({len(self.getCaptureTimes()) - 1});')
 
     def pause_at_middle(self):
         """Pauses the timeline and setis it to the middle.
@@ -392,7 +392,7 @@ class EarthTime:
             if not self.isPaused():
                 self.__driver.execute_script('timelapse.pause();')
 
-            self.__driver.execute_script(f'timelapse.seek({len(self.getCaptureTimes()) // 2});')
+            self.__driver.execute_script(f'timelapse.seekToFrame({len(self.getCaptureTimes()) // 2});')
 
     def pause_at_start(self):
         """Pauses the timeline and sets it to the beginning."""
@@ -403,7 +403,7 @@ class EarthTime:
             if not self.isPaused():
                 self.__driver.execute_script('timelapse.pause();')
 
-            self.__driver.execute_script('timelapse.seek(0);')
+            self.__driver.execute_script('timelapse.seekToFrame(0);')
 
     def quit(self):
         """Closes the page and quits the `WebDriver` of this instance."""

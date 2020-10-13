@@ -377,7 +377,7 @@ class EarthTime:
             if not self.isPaused():
                 self.__driver.execute_script('timelapse.pause();')
 
-            self.__driver.execute_script(f'timelapse.seek({len(self.getCaptureTimes() - 1)})')
+            self.__driver.execute_script(f'timelapse.seek({len(self.getCaptureTimes()) - 1})')
 
     def pause_at_middle(self):
         """Pauses the timeline and setis it to the middle.

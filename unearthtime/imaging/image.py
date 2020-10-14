@@ -168,6 +168,7 @@ class Image:
         )
 
         self.__image, self.__color_space = Image.__resolve_image(image, from_color_space, to_color_space)
+        self.__hash = 0
         self.__height = image.shape[0]
         self.__width = image.shape[1]
 
@@ -178,7 +179,11 @@ class Image:
         if hasattr(self.__image, attr):
             return getattr(self.__image, attr)
 
-    def __hash__(self): return hash((self.__image, self.__color_space, self.__width, self.__height))
+    def __hash__(self):
+        if not self.__hash:
+            self.__hash = hash((self.__image.data.tobytes(), self.__color_space, self.__width, self.__height))
+
+        return self.__hash
 
     def __abs__(self):
         return Image(self.__image.__abs__(), self.__color_space)
@@ -371,6 +376,7 @@ class Image:
 
     def __setitem__(self, value, /):
         self.__image.__setitem__(value)
+        self.__hash = 0
 
     def __sizeof__(self):
         return self.__image.__sizeof__()
@@ -432,6 +438,7 @@ class Image:
 
     def change_color_space(self, color_space: str):
         self.__image, self.__color_space = Image.__resolve_image(self.__image, self.__color_space, color_space)
+        self.__hash = 0
 
     def compare_full(self, img: Image, rect_color: RGBColor = (0, 0, 255), line_thickness=1, line_type=cv.LINE_8):
         cim1, cim2 = self.with_color_space('BGR'), img.with_color_space('BGR')

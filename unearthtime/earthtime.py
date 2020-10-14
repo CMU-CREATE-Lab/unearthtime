@@ -327,7 +327,7 @@ class EarthTime:
 
             self.__driver.maximize_window()
 
-            time.sleep(2)
+            time.sleep(3)
 
             if imp_wait > 0:
                 self.__driver.implicitly_wait(imp_wait)
@@ -343,10 +343,9 @@ class EarthTime:
             * `wait`: float, int = 0
         """
         if wait > 0:
-            c = time.time()
+            time.sleep(wait)
 
-            while (((time.time() - c) < wait) or self.isSpinnerShowing()) and not self.lastFrameCompletelyDrawn:
-                c = time.time()
+            while self.isSpinnerShowing():
                 pass
 
         return self.lastFrameCompletelyDrawn

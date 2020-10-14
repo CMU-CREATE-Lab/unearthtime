@@ -327,6 +327,8 @@ class EarthTime:
 
             self.__driver.maximize_window()
 
+            time.sleep(2)
+
             if imp_wait > 0:
                 self.__driver.implicitly_wait(imp_wait)
 

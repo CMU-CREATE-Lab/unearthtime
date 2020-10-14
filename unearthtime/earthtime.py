@@ -470,7 +470,7 @@ class EarthTime:
 
         return res
 
-    def screenshot(self, mode: str = 'png'):
+    def screenshot(self, mode: str = 'RGB'):
         """Screenshots the window
 
         Parameters:
@@ -495,7 +495,7 @@ class EarthTime:
         else:
             return Image.from_bytes(self.__driver.get_screenshot_as_png(), mode)
         
-    def screenshot_and_save(self, fp: str = './', color_space: str = 'BGR', format_=None, **params):
+    def screenshot_and_save(self, fp: str = './', color_space: str = 'RGB', format_=None, **params):
         """Screenshots the window and saves it as a '.png'
 
         Parameters:
@@ -506,7 +506,7 @@ class EarthTime:
         """
         self.screenshot(color_space).save(fp, format_, **params)
 
-    def screenshot_content(self, mode: str = 'png'):
+    def screenshot_content(self, mode: str = 'RGB'):
         """Screenshots the data panes
 
         Parameters:
@@ -521,7 +521,7 @@ class EarthTime:
         """
         return self.DataPanes.screenshot(mode)
     
-    def screenshot_content_and_save(self, fp: str = './', color_space: str = 'BGR', format_=None, **params):
+    def screenshot_content_and_save(self, fp: str = './', color_space: str = 'RGB', format_=None, **params):
         """Screenshots the data panes and saves it.
 
         Parameters:

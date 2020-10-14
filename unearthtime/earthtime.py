@@ -345,7 +345,11 @@ class EarthTime:
         if draw_calls > 0:
             calls = 0
 
-            while (calls < draw_calls or self.isSpinnerShowing()) and not self.lastFrameCompletelyDrawn:
+            while self.isSpinnerShowing():
+                pass
+
+            while not self.lastFrameCompletelyDrawn and calls < draw_calls:
+                time.sleep(0.5)
                 calls += 1
 
         return self.lastFrameCompletelyDrawn

@@ -178,6 +178,8 @@ class Image:
         if hasattr(self.__image, attr):
             return getattr(self.__image, attr)
 
+    def __hash__(self): return hash((self.__image, self.__color_space, self.__width, self.__height))
+
     def __abs__(self):
         return Image(self.__image.__abs__(), self.__color_space)
 

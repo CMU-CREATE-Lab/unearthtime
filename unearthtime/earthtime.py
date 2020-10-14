@@ -343,10 +343,12 @@ class EarthTime:
             * `wait`: float, int = 0
         """
         if wait > 0:
-            time.sleep(wait)
+            fwait = wait / 15
+            total_time = 0
 
-            while self.isSpinnerShowing():
-                pass
+            while (total_time < wait or self.isSpinnerShowing()) and not self.lastFrameCompletelyDrawn:
+                time.sleep(fwait)
+                total_time += fwait
 
         return self.lastFrameCompletelyDrawn
 

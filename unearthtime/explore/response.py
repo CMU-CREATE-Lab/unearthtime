@@ -86,6 +86,11 @@ class Hit:
         return self._element.parent.session_id
 
     @property
+    def is_hidden(self):
+        """Whether this element is hidden on the UI."""
+        return self._element.parent.execute_script('return arguments[0].is(":hidden")', self._element)
+
+    @property
     def is_visible(self):
         """Whether this element is visible on the UI."""
         return self._element.parent.execute_script('return arguments[0].is(":visible")', self._element)

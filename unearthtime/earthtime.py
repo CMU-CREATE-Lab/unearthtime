@@ -373,8 +373,8 @@ class EarthTime:
 
     def pause_at_end(self):
         """Pauses the timeline and sets it to the end."""
-        if self.TimelineControl:
-            if (btn := self.TimelinePlayPauseButton)['title'] == 'Pause':
+        if self.TimelineControl and (btn := self.TimelinePlayPauseButton):
+            if btn['title'] == 'Pause':
                 btn.click()
 
             if not self.isPaused():
@@ -388,8 +388,8 @@ class EarthTime:
         Notes:
             * The middle is defined by half the length of the total capture times rounded down.
         """
-        if self.TimelineControl:
-            if (btn := self.TimelinePlayPauseButton)['title'] == 'Pause':
+        if self.TimelineControl and (btn := self.TimelinePlayPauseButton):
+            if btn['title'] == 'Pause':
                 btn.click()
 
             if not self.isPaused():
@@ -399,8 +399,8 @@ class EarthTime:
 
     def pause_at_start(self):
         """Pauses the timeline and sets it to the beginning."""
-        if self.TimelineControl:
-            if (btn := self.TimelinePlayPauseButton)['title'] == 'Pause':
+        if self.TimelineControl and (btn := self.TimelinePlayPauseButton):
+            if btn['title'] == 'Pause':
                 btn.click()
 
             if not self.isPaused():

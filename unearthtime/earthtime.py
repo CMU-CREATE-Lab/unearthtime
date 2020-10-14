@@ -336,19 +336,17 @@ class EarthTime:
             self.__running = True
             self.__total_pages += 1
 
-    def map_loaded(self, wait: Union[float, int] = 0) -> bool:
+    def map_loaded(self, draw_calls: int = 0) -> bool:
         """Whether or not the last frame has been completely drawn for a layer.
 
         Parameters:
-            * `wait`: float, int = 0
+            * `draw_calls`: int = 0
         """
-        if wait > 0:
-            fwait = wait / 15
-            total_time = 0
+        if draw_calls > 0:
+            calls = 0
 
-            while (total_time < wait or self.isSpinnerShowing()) and not self.lastFrameCompletelyDrawn:
-                time.sleep(fwait)
-                total_time += fwait
+            while (calls < draw_calls or self.isSpinnerShowing()) and not self.lastFrameCompletelyDrawn:
+                calls += 1
 
         return self.lastFrameCompletelyDrawn
 

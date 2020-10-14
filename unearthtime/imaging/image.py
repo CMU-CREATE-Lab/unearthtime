@@ -181,7 +181,7 @@ class Image:
 
     def __hash__(self):
         if not self.__hash:
-            self.__hash = hash((self.__image.data.tobytes(), self.__color_space, self.__width, self.__height))
+            self.__hash = hash((self.__image.data.toreadonly, self.__image.sum(), self.__color_space, self.__width, self.__height))
 
         return self.__hash
 

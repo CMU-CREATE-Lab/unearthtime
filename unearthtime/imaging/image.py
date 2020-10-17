@@ -11,6 +11,7 @@ from urllib import request
 import cv2 as cv
 import imutils as im
 from PIL import Image as PILImage
+from PIL.PngImagePlugin import PngInfo
 from numpy import array, ndarray
 from skimage import io as skio
 from skimage.metrics import mean_squared_error as mse
@@ -169,8 +170,8 @@ class Image:
 
         self.__image, self.__color_space = Image.__resolve_image(image, from_color_space, to_color_space)
         self.__hash = 0
-        self.__height = image.shape[0]
-        self.__width = image.shape[1]
+        self.__height, self.__width = image.shape[0], image.shape[1]
+        self.__info = PngInfo()
 
     def __copy__(self):
         return Image(self.__image.copy(), self.__color_space, self.__color_space)
@@ -433,6 +434,12 @@ class Image:
     def width(self):
         return self.__width
 
+    def add_text(self, key, value, zip_: bool = False):
+        self.__info.add_text(key, value, zip_)
+
+    def add_itxt(self, key, value, lang: str = "", tkey: str = "", zip_: bool = False):
+        self.__info.add_itxt(key, value, lang, tkey, zip_)
+
     def as_image(self):
         return PILImage.fromarray(self.__image)
 
@@ -477,8 +484,16 @@ class Image:
     def draw_rectangle(self, pt1, pt2, color: RGBColor = (0, 0, 255), line_thickness: int = 1, line_type: int = cv.LINE_8):
         cv.rectangle(self.__image, pt1, pt2, color, line_thickness, line_type)
 
-    def save(self, fp: str = './', format_=None, **params):
-        self.as_image().save(fp, format_, **params)
+    def save(self, fp: str, format_=None, **params):
+        if format_.lower() == 'png' or (fp and fp.endswith('.png')):
+            pnginfo = params.get('pnginfo', None)
+
+            if pnginfo():
+                self.as_image().save(fp, format_, pnginfo={**self.__info, **pnginfo})
+            else:
+                self.as_image().save(fp, format_, pnginfo=self.__info, **params)
+        else:
+            self.as_image().save(fp, format_, **params)
 
     def show(self, name: str):
         cv.imshow(name, self.__image)

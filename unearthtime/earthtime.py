@@ -39,6 +39,7 @@ ElementPredicate = Callable[[Union[Element, Iterable[Element], Hit, HitList]], b
 
 _Explore: Final[str] = 'https://earthtime.org/explore'
 _ImplicitWait: Final[int] = 0
+_LoadedWait = 0.5
 
 
 class EarthTime:
@@ -109,32 +110,35 @@ class EarthTime:
         return '%s:[%s]' % (EarthTime.__name__, self.__url)
 
     @classmethod
-    def explore(cls, driver: DriverType, url: str = _Explore, imp_wait: Union[float, int] = _ImplicitWait):
+    def explore(cls, driver: DriverType, url: str = _Explore, load_wait: Union[float, int] = 0, imp_wait: Union[float, int] = _ImplicitWait):
         """Instantiates and loads an `EarthTime` page.
 
         Parameters:
             - `driver`: `WebDriver`, `() -> Driver`
             - `url`: `str`
+            - `load_wait`: `float`, `int` = 0
             - `imp_wait`: `float`, `int` = 0
         """
         et = cls(driver, url)
-        et.load(imp_wait)
+        et.load(load_wait, imp_wait)
 
         return et
 
     @classmethod
-    def explore_from_hash(cls, driver: DriverType, hash_: str, root_url: str = _Explore, imp_wait: Union[float, int] = _ImplicitWait):
+    def explore_from_hash(cls, driver: DriverType, hash_: str, root_url: str = _Explore, load_wait: Union[float, int] = 0, imp_wait: Union[float, int] = _ImplicitWait):
         """Instantiates and loads an `EarthTime` page from a hash.
 
         Parameters:
             - `driver`: `WebDriver`, `() -> Driver`
             - `hash_`: `str`
+            - `load_wait`: `float`, `int` = 0
+            - `imp_wait`: `float`, `int` = 0
 
         Notes:
             - `hash_` should not have a '#' in front of it. The `url` will be rendered as `root_url#hash_to_layer_or_waypoint`
         """
         et = cls(driver, f'{root_url}#{hash_}')
-        et.load(imp_wait)
+        et.load(load_wait, imp_wait)
 
         return et
 
@@ -302,10 +306,11 @@ class EarthTime:
 
                 return locator(self.__driver, *key[1:]) if not callable(key[-1]) else locator(self.__driver, *key[1:-1], until=key[-1])
 
-    def load(self, imp_wait: Union[float, int] = _ImplicitWait):
+    def load(self, load_wait: Union[float, int] = 0, imp_wait: Union[float, int] = _ImplicitWait):
         """Instantiates the `WebDriver` of this instance and loads the page of the given `url`.
 
         Parameters:
+            - `load_wait`: `float`, `int` = 0
             - `imp_wait`: `float`, `int` = 0
 
         Raises:
@@ -323,11 +328,12 @@ class EarthTime:
             self.__driver._EarthTimePage = self
             self.__driver.get(self.__url)
 
-            time.sleep(2)
+            time.sleep(1)
 
             self.__driver.maximize_window()
 
-            time.sleep(3)
+            if load_wait > 0:
+                time.sleep(load_wait)
 
             if imp_wait > 0:
                 self.__driver.implicitly_wait(imp_wait)
@@ -336,7 +342,7 @@ class EarthTime:
             self.__running = True
             self.__total_pages += 1
 
-    def map_loaded(self, draw_calls: int = 0) -> bool:
+    def map_loaded(self, draw_calls: int = 0, wait: Union[float, int] = _LoadedWait) -> bool:
         """Whether or not the last frame has been completely drawn for a layer.
 
         Parameters:
@@ -348,8 +354,10 @@ class EarthTime:
             while self.isSpinnerShowing():
                 pass
 
+            wait = (wait + abs(wait)) / 2
+
             while not self.lastFrameCompletelyDrawn and calls < draw_calls:
-                time.sleep(0.5)
+                time.sleep(wait)
                 calls += 1
 
         return self.lastFrameCompletelyDrawn
@@ -532,10 +540,10 @@ class EarthTime:
         """
         self.DataPanes.screenshot_and_save(fp, color_space, format_, **params)
 
-    def set_hash(self, hash_: str, wait: int = 0):
+    def set_hash(self, hash_: str, draw_calls: int = 0, wait: Union[float, int] = _LoadedWait):
         """Alters the url to include a hash."""
         self(f"window.location.hash = '{hash_}'")
-        return self.map_loaded(wait)
+        return self.map_loaded(draw_calls, wait)
 
     @staticmethod
     def __reset_driver():
@@ -603,7 +611,7 @@ class EarthTimePool:
     def size(self):
         return self.__size
 
-    def acquire(self, url: str = _Explore, imp_wait: Union[float, int] = _ImplicitWait, block: bool = True, timeout: float = None):
+    def acquire(self, url: str = _Explore, load_wait: Union[float, int] = 0, imp_wait: Union[float, int] = _ImplicitWait, block: bool = True, timeout: float = None):
         if self.__available_count > 0:
             et = self.__available.get_nowait()
 
@@ -615,9 +623,9 @@ class EarthTimePool:
                 else:
                     self.__occupied[et.session_id] = et
                     self.__available_count -= 1
-                    return self.acquire(url, imp_wait, block, timeout)
+                    return self.acquire(url, load_wait, imp_wait, block, timeout)
             else:
-                return self.acquire(url, imp_wait, block, timeout)
+                return self.acquire(url, load_wait, imp_wait, block, timeout)
 
             et.driver.start_session({})
             et.driver.get(url)
@@ -625,6 +633,9 @@ class EarthTimePool:
             time.sleep(2)
 
             et.driver.maximize_window()
+
+            if load_wait > 0:
+                time.sleep(load_wait)
 
             if imp_wait > 0:
                 et.driver.implicitly_wait(imp_wait)

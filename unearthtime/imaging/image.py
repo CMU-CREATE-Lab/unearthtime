@@ -401,7 +401,11 @@ class Image:
 
     @classmethod
     def from_image(cls, img: PILImage, to_color_space: str = 'BGR'):
-        return cls(array(img), img.mode, to_color_space)
+        im =  cls(array(img), img.mode, to_color_space)
+
+        if img.text:
+            for key, value in img.items():
+                im.add_text(key, value)
 
     @classmethod
     def read_file(cls, fp: str, flags=None, to_color_space: str = 'BGR'):
@@ -488,10 +492,10 @@ class Image:
         cv.rectangle(self.__image, pt1, pt2, color, line_thickness, line_type)
 
     def save(self, fp: str, format_=None, **params):
-        if format_.lower() == 'png' or (fp and fp.endswith('.png')):
+        if (format_ and format_.lower() == 'png') or (fp and fp.endswith('.png')):
             pnginfo = params.get('pnginfo', None)
 
-            if pnginfo():
+            if pnginfo:
                 self.as_image().save(fp, format_, pnginfo={**self.__info, **pnginfo})
             else:
                 self.as_image().save(fp, format_, pnginfo=self.__info, **params)

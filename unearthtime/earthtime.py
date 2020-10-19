@@ -180,6 +180,27 @@ class EarthTime:
         """The `Timelapse` associated with this instance."""
         return self.__timelapse
 
+    def clear_cache(self):
+        url = self.__driver.current_url
+
+        self.__driver.get('chrome://settings/clearBrowserData')
+
+        time.sleep(5)
+
+        _ = self.__driver.switch_to.active_element
+
+        clear_data_btn = self.__driver.execute_script("return document.querySelector('settings-ui').shadowRoot.querySelector('settings-main').shadowRoot.querySelector("
+                                                      "'settings-basic-page').shadowRoot.querySelector('settings-section > settings-privacy-page').shadowRoot.querySelector("
+                                                      "'settings-clear-browsing-data-dialog').shadowRoot.querySelector('#clearBrowsingDataDialog').querySelector("
+                                                      "'#clearBrowsingDataConfirm')")
+
+        clear_data_btn.click()
+
+        while self.__driver.current_url.endswith('clearBrowserData'):
+            pass
+
+        self.__driver.get(url)
+
     def execute(self, javascript: str, *args):
         """Executes a string a javascript
 

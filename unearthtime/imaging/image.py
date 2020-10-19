@@ -11,7 +11,7 @@ from urllib import request
 import cv2 as cv
 import imutils as im
 from PIL import Image as PILImage
-from PIL.PngImagePlugin import PngInfo
+from PIL.PngImagePlugin import PngImageFile, PngInfo
 from numpy import array, ndarray
 from skimage import io as skio
 from skimage.metrics import mean_squared_error as mse
@@ -401,11 +401,14 @@ class Image:
 
     @classmethod
     def from_image(cls, img: PILImage, to_color_space: str = 'BGR'):
-        im =  cls(array(img), img.mode, to_color_space)
+        im = cls(array(img), img.mode, to_color_space)
 
-        if img.text:
-            for key, value in img.items():
-                im.add_text(key, value)
+        if isinstance(img, PngImageFile):
+            if img.text:
+                for key, value in img.text.items():
+                    im.add_text(key, value)
+
+        return im
 
     @classmethod
     def read_file(cls, fp: str, flags=None, to_color_space: str = 'BGR'):

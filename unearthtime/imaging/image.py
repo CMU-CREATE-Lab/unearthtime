@@ -431,6 +431,9 @@ class Image:
         return self.__height
 
     @property
+    def png_info(self): return self.__info
+
+    @property
     def width(self):
         return self.__width
 

@@ -364,25 +364,35 @@ class EarthTime:
             self.__running = True
             self.__total_pages += 1
 
-    def map_loaded(self, draw_calls: int = 0, wait: Union[float, int] = _LoadedWait) -> bool:
+    def map_loaded(self, max_reloads: int = 2, draw_calls: int = 0, wait: Union[float, int] = _LoadedWait) -> bool:
         """Whether or not the last frame has been completely drawn for a layer.
 
         Parameters:
             * `draw_calls`: int = 0
         """
-        if draw_calls > 0:
+
+        current_time = time.time()
+        reloads = 0
+
+        while self.isSpinnerShowing():
+            if (time.time() - current_time) > 10:
+                if reloads < max_reloads:
+                    self.__driver.refresh()
+                    time.sleep(5)
+                    current_time = time.time()
+                else:
+                    break
+
+        spinner = self.isSpinnerShowing()
+
+        if not spinner and draw_calls > 0:
             calls = 0
-
-            while self.isSpinnerShowing():
-                pass
-
-            wait = (wait + abs(wait)) / 2
 
             while not self.lastFrameCompletelyDrawn and calls < draw_calls:
                 time.sleep(wait)
                 calls += 1
 
-        return self.lastFrameCompletelyDrawn
+        return not spinner and self.lastFrameCompletelyDrawn
 
     def new_session(self, url: str = _Explore):
         """Starts a new driver session, a page loaded with the given url.

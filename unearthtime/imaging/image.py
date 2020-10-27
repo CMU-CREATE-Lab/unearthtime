@@ -499,7 +499,8 @@ class Image:
             pnginfo = params.get('pnginfo', None)
 
             if pnginfo:
-                self.as_image().save(fp, format_, pnginfo={**self.__info, **pnginfo})
+                del params['pnginfo']
+                self.as_image().save(fp, format_, pnginfo={**self.__info, **pnginfo}, **params)
             else:
                 self.as_image().save(fp, format_, pnginfo=self.__info, **params)
         else:

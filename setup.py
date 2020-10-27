@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name='unearthtime',
-    version='0.1.6-alpha',
+    version='0.1.7-alpha',
     packages=setuptools.find_packages(),
     url='https://github.com/CMU-CREATE-Lab/unearthtime',
     author='hjhawkinsiv',

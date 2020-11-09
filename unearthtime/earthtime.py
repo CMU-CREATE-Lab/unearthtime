@@ -13,10 +13,8 @@ Attributes:
 
 from __future__ import annotations
 
-import concurrent.futures
-import hashlib
 import time
-from functools import lru_cache, partial, singledispatchmethod as overloaded
+from functools import lru_cache, singledispatchmethod as overloaded
 from queue import Queue
 from typing import Callable, Final, Iterable, Union
 
@@ -278,6 +276,9 @@ class EarthTime:
             else:
                 self('arguments[0].hide()', cnt._element)
     
+    def hide_spinner(self, viewer_div_id: str = "viewerContainer"):
+        self.hideSpinner(viewer_div_id)
+    
     def is_running(self) -> bool:
         """Whether or not this page is actively running."""
         try:
@@ -386,9 +387,10 @@ class EarthTime:
         while self.isSpinnerShowing():
             if (time.time() - current_time) > 10:
                 if reloads < max_reloads:
-                    self.__driver.refresh()
-                    time.sleep(5)
+                    self('location.reload(true)')
+                    time.sleep(2)
                     current_time = time.time()
+                    reloads += 1
                 else:
                     break
         
@@ -564,7 +566,7 @@ class EarthTime:
         """
         self.screenshot(color_space).save(fp, format_, **params)
     
-    def screenshot_content(self, mode: str = 'RGB'):
+    def screenshot_map(self, mode: str = 'RGB'):
         """Screenshots the data panes
 
         Parameters:
@@ -577,10 +579,9 @@ class EarthTime:
                 - img, IMG, image
                 - color space
         """
-        return self.DataPanes.screenshot(mode)
+        return self.ViewerContainer.screenshot(mode)
     
-    def screenshot_content_and_save(self, fp: str, color_space: str = 'RGB', format_=None,
-                                    **params):
+    def screenshot_map_and_save(self, fp: str, color_space: str = 'RGB', format_=None, **params):
         """Screenshots the data panes and saves it.
 
         Parameters:
@@ -589,7 +590,7 @@ class EarthTime:
             - `format`
             - `**params`
         """
-        self.DataPanes.screenshot_and_save(fp, color_space, format_, **params)
+        self.ViewerContainer.screenshot_and_save(fp, color_space, format_, **params)
     
     def set_hash(self, hash_: str, draw_calls: int = 0, wait: Union[float, int] = _LoadedWait):
         """Alters the url to include a hash."""
@@ -763,5 +764,3 @@ class EarthTimePool:
         if bool(et):
             et.close()
             self.__available.put_nowait(et)
-
-

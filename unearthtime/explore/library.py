@@ -24,6 +24,7 @@ class Library:
         'DataPanes': Locator('timeMachine_timelapse_dataPanes', By.ID),
         'ExtrasContent': Locator('[aria-describedby="extras-content-container"]'),
         'ExtrasContentCloseButton': Locator('[aria-describedby="extras-conent-container"] button[title="Close"]'),
+        'ViewerContainer' : Locator('viewerContainer', By.ID),
 
         'LocationSearchContainer': Locator('div.location_search_div', By.ID),
         'LocationSearchIcon': Locator('location_search_icon', By.ID),

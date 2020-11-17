@@ -10,6 +10,7 @@ setuptools.setup(
     description='EarthTime Automation Framework',
     data_files=[('', ['LICENSE'])],
     install_requires=[
+        'numpy=1.19.1',
         'imutils',
         'opencv-python',
         'Pillow',

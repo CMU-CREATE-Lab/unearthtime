@@ -25,6 +25,7 @@ class Library:
         'ExtrasContent': Locator('[aria-describedby="extras-content-container"]'),
         'ExtrasContentCloseButton': Locator('[aria-describedby="extras-conent-container"] button[title="Close"]'),
         'ViewerContainer' : Locator('viewerContainer', By.ID),
+        'Player': Locator('div.player'),
 
         'LocationSearchContainer': Locator('div.location_search_div', By.ID),
         'LocationSearchIcon': Locator('location_search_icon', By.ID),
@@ -288,10 +289,12 @@ class Library:
         'ThemeTitleContainer': Locator('theme-title-container', By.ID),
         'WaypointsContainer': Locator('div.snaplapse_keyframe_list'),
         'Waypoints': Locator("div.snaplapse_keyframe_list > div[id*='timeMachine_snaplapse_keyframe_'] > div:first-child", list_=True),
+        
         'Waypoint': Locator([
-            lambda id_: f'div.snaplapse_keyframe_list_item > #{id_}',
-            lambda id_: f'#{prefix(id_, "timeMachine_snaplapse_keyframe_")} > div',
-        ]),
+            lambda id_: id_,
+            lambda id_: f'#{prefix(id_, "timeMachine_snaplapse_keyframe_")} > div'],
+            [By.ID, By.CSS]),
+        
         'WaypointThumbnail': Locator([
             lambda id_: suffix(prefix(id_, 'timeMachine_snaplapse_keyframe_'), '_thumbnail'),
             lambda id_: f'div.snaplapse_keyframe_list_item > #{id_} > img'],

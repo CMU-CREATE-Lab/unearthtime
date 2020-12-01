@@ -2,6 +2,7 @@
 .vs/
 build/
 dist/
+unearthtime.test/
 unearthtime.egg-info/
 venv/
 __pycache__/

@@ -5,7 +5,7 @@ from collections import namedtuple
 from enum import Enum
 from http.client import HTTPMessage
 from io import BytesIO
-from typing import Tuple, Final, Union
+from typing import Any, Dict, Tuple, Final, Union
 from urllib import request
 
 import cv2 as cv
@@ -17,7 +17,7 @@ from skimage import io as skio
 from skimage.metrics import mean_squared_error as mse
 from skimage.metrics import structural_similarity as ssim
 
-from .._algae.warnings import overridinginvalidinput
+from .._algae.warnings import overriding, overridinginvalidinput
 from .._algae.exceptions import UnearthtimeException
 from .._algae.strings import ismalformedurl, noneorempty
 from .._algae.utils import raiseif, isint
@@ -392,15 +392,15 @@ class Image:
         return Image(self.__image.__xor__(value), self.__color_space)
 
     @classmethod
-    def from_base64(cls, base64: str, to_color_space: str = 'BGR'):
+    def from_base64(cls, base64: str, to_color_space: str = 'RGBA'):
         return cls(array(PILImage.open(BytesIO(a2b_base64(base64)))), 'RGBA', to_color_space)
 
     @classmethod
-    def from_bytes(cls, bytes_: bytes, to_color_space: str = 'BGR'):
+    def from_bytes(cls, bytes_: bytes, to_color_space: str = 'RGBA'):
         return cls(array(PILImage.open(BytesIO(bytes_))), 'RGBA', to_color_space)
 
     @classmethod
-    def from_image(cls, img: PILImage, to_color_space: str = 'BGR'):
+    def from_image(cls, img: PILImage, to_color_space: str = None):
         im = cls(array(img), img.mode, to_color_space)
 
         if isinstance(img, PngImageFile):
@@ -415,7 +415,7 @@ class Image:
         return cls(cv.imread(fp, flags), 'BGR', to_color_space=to_color_space)
 
     @classmethod
-    def read_url(cls, url: str, from_color_space: str = 'BGR', to_color_space: str = 'BGR', plugin=None, **plugin_args):
+    def read_url(cls, url: str, from_color_space: str = 'RGB', to_color_space: str = 'RGB', plugin=None, **plugin_args):
         tcs = to_color_space.upper()
 
         img = skio.imread(url, as_gray=tcs in ('GRAY', 'GREY'), plugin=plugin, **plugin_args)
@@ -494,15 +494,22 @@ class Image:
     def draw_rectangle(self, pt1, pt2, color: RGBColor = (0, 0, 255), line_thickness: int = 1, line_type: int = cv.LINE_8):
         cv.rectangle(self.__image, pt1, pt2, color, line_thickness, line_type)
 
-    def save(self, fp: str, format_=None, **params):
+    def save(self, fp: str, format_=None, pnginfo=None, **params):
         if (format_ and format_.lower() == 'png') or (fp and fp.endswith('.png')):
-            pnginfo = params.get('pnginfo', None)
-
+            info = self.__info
+            
             if pnginfo:
-                del params['pnginfo']
-                self.as_image().save(fp, format_, pnginfo={**self.__info, **pnginfo}, **params)
-            else:
-                self.as_image().save(fp, format_, pnginfo=self.__info, **params)
+                if isinstance(pnginfo, PngInfo):
+                    overriding('stored png info.')
+                    info = pnginfo
+                else:
+                    if not isinstance(pnginfo, dict):
+                        pnginfo = dict(pnginfo)
+                
+                    for name, value in pnginfo.items():
+                        info.add_text(name, str(value))
+                    
+            self.as_image().save(fp, format_, pnginfo=info, **params)
         else:
             self.as_image().save(fp, format_, **params)
 
@@ -529,13 +536,13 @@ class Image:
             UnearthtimeException(f':[{fcs}2{tcs}]: Invalid color space conversion.')
         )
 
+        if fcs == 'GREY':
+            fcs = 'GRAY'
+
+        if tcs == 'GREY':
+            tcs = 'GRAY'
+            
         if fcs != tcs:
-            if fcs == 'GREY':
-                fcs = 'GRAY'
-
-            if tcs == 'GREY':
-                tcs = 'GRAY'
-
             cvtcs = f'COLOR_{fcs}2{tcs}'
 
             try:

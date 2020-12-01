@@ -335,6 +335,8 @@ class EarthTime:
                 
                 return locator(self.__driver, *key[1:]) if not callable(key[-1]) else locator(
                     self.__driver, *key[1:-1], until=key[-1])
+            else:
+                return Miss
     
     def load(self, load_wait: Union[float, int] = 0, imp_wait: Union[float, int] = _ImplicitWait):
         """Instantiates the `WebDriver` of this instance and loads the page of the given `url`.
@@ -402,6 +404,8 @@ class EarthTime:
             while not self.lastFrameCompletelyDrawn and calls < draw_calls:
                 time.sleep(wait)
                 calls += 1
+        else:
+            self.hide_spinner()
         
         return not spinner and self.lastFrameCompletelyDrawn
     
@@ -490,7 +494,7 @@ class EarthTime:
             
             return driver
     
-    def retry(self, index: int = -1):
+    def retry_query(self, index: int = -1):
         """Retries the query at a given index of the history.
 
         Parameters:
@@ -502,8 +506,7 @@ class EarthTime:
         return self.pull(self.__history[index]) if -len(self.__history) <= index < len(
             self.__history) else Miss
     
-    def retry_only_if(self, key: Union[str, tuple], condition: Union[bool, ElementPredicate],
-                      actions: Callable[[], None] = None):
+    def retry_query_if(self, key: Union[str, tuple], condition: Union[bool, ElementPredicate], actions: Callable[[], None] = None):
         """Attempts to retrieve an element based on a given `Locator` name,
         retrying if it fails the `condition`.
 
@@ -566,7 +569,7 @@ class EarthTime:
         """
         self.screenshot(color_space).save(fp, format_, **params)
     
-    def screenshot_map(self, mode: str = 'RGB'):
+    def screenshot_player(self, mode: str = 'RGB'):
         """Screenshots the data panes
 
         Parameters:
@@ -579,9 +582,9 @@ class EarthTime:
                 - img, IMG, image
                 - color space
         """
-        return self.ViewerContainer.screenshot(mode)
+        return self.Player.screenshot(mode)
     
-    def screenshot_map_and_save(self, fp: str, color_space: str = 'RGB', format_=None, **params):
+    def screenshot_player_and_save(self, fp: str, color_space: str = 'RGB', format_=None, **params):
         """Screenshots the data panes and saves it.
 
         Parameters:
@@ -590,12 +593,14 @@ class EarthTime:
             - `format`
             - `**params`
         """
-        self.ViewerContainer.screenshot_and_save(fp, color_space, format_, **params)
+        self.Player.screenshot_and_save(fp, color_space, format_, **params)
     
-    def set_hash(self, hash_: str, draw_calls: int = 0, wait: Union[float, int] = _LoadedWait):
+    def set_hash(self, hash_: str, wait: Union[float, int] = _LoadedWait):
         """Alters the url to include a hash."""
         self(f"window.location.hash = '{hash_}'")
-        return self.map_loaded(draw_calls, wait)
+        
+        if wait > 0:
+            time.sleep(wait)
     
     @staticmethod
     def __reset_driver():
